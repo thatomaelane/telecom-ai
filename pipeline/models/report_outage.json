@@ -1,0 +1,30 @@
+{
+  "target": "any grid outage in next 1-3 h, given grid up now",
+  "best_iteration": 111,
+  "TEST_A_seen_sites_future": {
+    "base_rate": 0.08045846357866818,
+    "AUC_model": 0.7636373510347676,
+    "AP_model": 0.3483311445501348,
+    "AUC_hazard_baseline": 0.7231884162708024,
+    "AP_hazard_baseline": 0.1812906907200168,
+    "precision_at_50pct_recall": 0.22927013603973223,
+    "threshold_at_50pct_recall": 0.1312120197474831
+  },
+  "TEST_B_unseen_sites_future": {
+    "base_rate": 0.08242826111809763,
+    "AUC_model": 0.7687305803833642,
+    "AP_model": 0.34809576708098466,
+    "AUC_hazard_baseline": 0.7322772879035414,
+    "AP_hazard_baseline": 0.19183674681884677,
+    "precision_at_50pct_recall": 0.2377391686826479,
+    "threshold_at_50pct_recall": 0.13049068535981737
+  },
+  "top_features": {
+    "sag": 0.322,
+    "cat": 0.243,
+    "hour": 0.19,
+    "volt": 0.143,
+    "volt_min3": 0.026,
+    "since_outage_h": 0.021
+  }
+}

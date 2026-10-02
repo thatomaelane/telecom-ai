@@ -1,0 +1,1343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connected Minds | Network Sustainability &amp; Security Command Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{
+  --bg:#f5f6f7; --panel:#ffffff; --line:#e4e6ea; --line-strong:#d3d7dd;
+  --red:#c7000b; --red-dark:#96000a; --red-tint:#fdecec;
+  --ink:#15181c; --ink-2:#4a5159; --muted:#7b828c;
+  --good:#1a8f4c; --good-tint:#e9f7ef; --warn:#b8720a; --warn-tint:#fdf3e2; --bad:#c7000b; --bad-tint:#fdecec;
+  --cyan:#0a6ebd; --cyan-tint:#eaf3fb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:'IBM Plex Mono',monospace}
+a{color:var(--cyan)}
+button{font-family:inherit;cursor:pointer}
+
+.shell{display:grid;grid-template-columns:224px 1fr;min-height:100vh}
+.nav{background:#fff;border-right:1px solid var(--line);padding:22px 0;display:flex;flex-direction:column}
+.nav-brand{padding:0 22px 18px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.nav-brand .mark{width:9px;height:26px;background:var(--red);border-radius:1px}
+.nav-brand .t1{font-weight:800;font-size:15px;letter-spacing:-.2px}
+.nav-brand .t2{color:var(--muted);font-size:10.5px;margin-top:1px}
+.nav-item{padding:11px 22px;color:var(--ink-2);cursor:pointer;border-left:3px solid transparent;font-size:13.5px;font-weight:500}
+.nav-item:hover{color:var(--ink);background:#faf9f9}
+.nav-item.active{color:var(--red);border-left-color:var(--red);background:var(--red-tint);font-weight:600}
+.nav-foot{margin-top:auto;padding:16px 22px;color:var(--muted);font-size:10.5px;border-top:1px solid var(--line)}
+
+.main{padding:24px 30px;overflow-x:hidden}
+.topbar{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px}
+.topbar h1{font-size:21px;margin:0;font-weight:800;letter-spacing:-.3px}
+.topbar .sub{color:var(--muted);font-size:12.5px}
+
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--cyan);padding:15px 16px;border-radius:6px}
+.kpi .label{color:var(--muted);font-size:11px;font-weight:600}
+.kpi .value{font-family:'IBM Plex Mono',monospace;font-size:23px;font-weight:600;margin-top:5px;color:var(--ink)}
+.kpi .sub{color:var(--muted);font-size:11px;margin-top:3px}
+.kpi.warn{border-top-color:var(--warn)}
+.kpi.bad{border-top-color:var(--bad)}
+.kpi.good{border-top-color:var(--good)}
+
+.grid2{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.panel-h{padding:13px 16px;border-bottom:1px solid var(--line);font-size:12.5px;font-weight:700;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+.panel-b{padding:15px 16px}
+#map{height:380px;border-radius:0 0 8px 8px}
+.legend{display:flex;gap:14px;font-size:11px;color:var(--muted);font-weight:500}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--muted);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);font-size:11px}
+td{padding:9px 10px;border-bottom:1px solid #f0f1f3}
+tr:hover td{background:#fafafa}
+.pill{display:inline-block;padding:2px 9px;font-size:11px;font-weight:700;border-radius:20px}
+.pill.high,.pill.critical{color:var(--bad);background:var(--bad-tint)}
+.pill.medium,.pill.alert,.pill.review{color:var(--warn);background:var(--warn-tint)}
+.pill.low,.pill.normal,.pill.optimise{color:var(--good);background:var(--good-tint)}
+.pill.backup{color:var(--cyan);background:var(--cyan-tint)}
+
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+select,input{background:#fff;border:1px solid var(--line-strong);color:var(--ink);padding:8px 11px;font-family:'Inter',sans-serif;font-size:13px;border-radius:6px}
+.btn{background:var(--red);border:1px solid var(--red);color:#fff;padding:9px 18px;font-weight:700;font-size:13px;border-radius:6px}
+.btn:hover{background:var(--red-dark)}
+.hint{color:var(--muted);font-size:11.5px}
+
+.decision-banner{border:1px solid var(--line);border-left:4px solid var(--cyan);background:#fff;padding:15px 17px;margin-bottom:14px;border-radius:8px}
+.decision-banner.high{border-left-color:var(--bad);background:var(--bad-tint)}
+.decision-banner.medium{border-left-color:var(--warn);background:var(--warn-tint)}
+.decision-banner.low{border-left-color:var(--muted)}
+.decision-banner .cat{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.decision-banner .act{font-size:15.5px;font-weight:800;margin:5px 0;color:var(--ink)}
+.decision-banner .why{color:var(--ink-2);font-size:12.5px}
+.decision-banner .issue{color:var(--red-dark);font-size:12.5px;margin-top:6px;font-weight:600}
+.decision-banner .impact{margin-top:9px;display:flex;gap:18px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-2)}
+
+.summary-band{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:16px;background:#fff}
+.summary-item{padding:14px 16px;border-right:1px solid var(--line)}
+.summary-item:last-child{border-right:none}
+.summary-item .l{color:var(--muted);font-size:11px;font-weight:600}
+.summary-item .v{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;margin-top:4px}
+.summary-item .v.trend-up{color:var(--bad)} .summary-item .v.trend-down{color:var(--good)}
+
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.metric{padding:11px;background:#fafbfc;border:1px solid var(--line);border-radius:6px}
+.metric .l{color:var(--muted);font-size:10.5px;font-weight:600}
+.metric .v{font-family:'IBM Plex Mono',monospace;font-size:17px;margin-top:3px;color:var(--ink)}
+
+.fin-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f1f3;font-size:12.5px}
+.fin-row .n{color:var(--ink-2)} .fin-row .v{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.fin-total{display:flex;justify-content:space-between;padding:11px 0 2px;font-weight:800;font-size:14.5px}
+.fin-note{color:var(--muted);font-size:10.5px;margin-top:8px;line-height:1.5}
+
+.tabs2{display:flex;gap:6px}
+.tab2{padding:7px 14px;font-size:12px;color:var(--ink-2);border:1px solid var(--line-strong);background:#fff;cursor:pointer;border-radius:6px;font-weight:600}
+.tab2.active{color:#fff;background:var(--ink);border-color:var(--ink)}
+
+.subnav{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+.subnav .t{padding:10px 4px;margin-right:20px;color:var(--muted);cursor:pointer;font-weight:600;font-size:13.5px;border-bottom:2px solid transparent}
+.subnav .t.active{color:var(--ink);border-bottom-color:var(--red)}
+
+.loading{color:var(--muted);padding:40px;text-align:center;font-size:13px}
+.chart-wrap{position:relative;height:220px}
+.chart-wrap.tall{height:280px}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#d3d7dd;border-radius:4px}
+
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:600;color:var(--ink-2)}
+.field input,.field select{width:100%}
+.maint-item{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid #f0f1f3;gap:12px}
+.maint-item:last-child{border-bottom:none}
+.maint-l{flex:1}
+.maint-l .c{font-weight:700;font-size:13px}
+.maint-l .r{color:var(--muted);font-size:12px;margin-top:2px}
+.maint-r{text-align:right;white-space:nowrap}
+.maint-r .zar{font-family:'IBM Plex Mono',monospace;color:var(--good);font-weight:700;font-size:13px}
+
+.group-tag{display:inline-block;padding:3px 9px;margin:2px;font-size:11px;background:#f0f1f3;border-radius:4px;color:var(--ink-2);font-family:'IBM Plex Mono',monospace}
+.upload-box{border:2px dashed var(--line-strong);border-radius:8px;padding:30px;text-align:center;background:#fafbfc}
+.upload-box.drag{border-color:var(--red);background:var(--red-tint)}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+.compare-table th{text-align:left;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);font-size:11px}
+.compare-table td{padding:9px 10px;border-bottom:1px solid #f0f1f3;font-family:'IBM Plex Mono',monospace}
+.compare-table td.label{font-family:'Inter',sans-serif;color:var(--ink-2)}
+.delta-good{color:var(--good);font-weight:700}
+.delta-bad{color:var(--bad);font-weight:700}
+.verdict{margin-top:12px;padding:12px 14px;border-radius:6px;font-size:13px;font-weight:600}
+.verdict.good{background:var(--good-tint);color:#136339}
+.verdict.bad{background:var(--bad-tint);color:var(--red-dark)}
+.verdict.neutral{background:#f0f1f3;color:var(--ink-2)}
+
+/* ---------- final improvements: labels, bands, live feed, cards ---------- */
+.nav-brand{cursor:pointer}
+.nav-brand:hover .t1{color:var(--red)}
+.nav-brand:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.nav-sep{margin:10px 22px 4px;border-top:1px solid var(--line)}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;font-family:'Inter',sans-serif}
+.tag.current{background:#e6f1fb;color:#0a5aa0;border:1px solid #b9d7f0}
+.tag.pred{background:#f1eafb;color:#6a3fb0;border:1px solid #d6c5ef}
+.tag.dec{background:#fdecec;color:#96000a;border:1px solid #f3bcbc}
+.tag.hist{background:#eef0f2;color:#4a5159;border:1px solid #d3d7dd}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:#1a8f4c;animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(26,143,76,.55)}70%{box-shadow:0 0 0 7px rgba(26,143,76,0)}100%{box-shadow:0 0 0 0 rgba(26,143,76,0)}}
+.band{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:26px 0 14px;padding:13px 18px;border-radius:8px;border-left:6px solid var(--line-strong);background:#fff;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band h2{margin:0;font-size:16px;font-weight:800;letter-spacing:-.1px}
+.band .bsub{font-size:12px;color:var(--ink-2);margin-top:2px}
+.band.current{border-left-color:#0a6ebd;background:#f3f8fd}
+.band.pred{border-left-color:#7a4fc4;background:#f8f5fd}
+.band.dec{border-left-color:var(--red);background:#fff6f6}
+.band.hist{border-left-color:#7b828c;background:#f7f8f9}
+.band:first-of-type{margin-top:6px}
+.livebar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:9px 14px;background:#fff;border:1px solid var(--line);border-radius:8px;font-size:12.5px}
+.livebar b{font-family:'IBM Plex Mono',monospace}
+.key-strip{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-bottom:6px;font-size:12px;color:var(--ink-2)}
+.panel-h .ph-l{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.panel-h .ph-r{display:flex;gap:10px;align-items:center}
+.kpi-row.k4{grid-template-columns:repeat(4,1fr)}
+.kpi .sub.up{color:var(--bad)} .kpi .sub.down{color:var(--good)}
+.kpi .value .u{font-size:13px;color:var(--muted);font-weight:500}
+.mini-h{display:flex;gap:10px;align-items:center;margin:2px 0 10px;font-size:12.5px;color:var(--ink-2)}
+.sel-sm{padding:5px 8px;font-size:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+.cx-tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+.big-note{margin-top:10px;padding:10px 12px;border-radius:6px;background:#f3f8fd;border:1px solid #d6e6f5;color:#0a4f8a;font-size:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:#f0f1f3;border-radius:14px;padding:3px 10px;font-size:11.5px;font-weight:600;color:var(--ink-2)}
+.cmp td.num,.cmp th.num{text-align:right}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:#fdf3f3}
+.btn-sm{background:#fff;border:1px solid var(--line-strong);color:var(--ink);padding:5px 11px;font-weight:600;font-size:12px;border-radius:6px}
+.btn-sm:hover{border-color:var(--red);color:var(--red)}
+.btn-red-sm{background:var(--red);border:1px solid var(--red);color:#fff;padding:6px 12px;font-weight:700;font-size:12px;border-radius:6px;width:100%;margin-top:8px}
+.leaflet-tooltip.site-tip{white-space:normal;width:318px;padding:0;border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 6px 22px rgba(0,0,0,.18)}
+.leaflet-popup-content{margin:0;width:318px !important}
+.leaflet-popup-content-wrapper{border-radius:8px;padding:0}
+.sc{font-family:'Inter',sans-serif;font-size:11.5px;color:var(--ink);line-height:1.4}
+.sc-h{padding:9px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;background:#fafbfc;border-radius:8px 8px 0 0}
+.sc-h b{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.sc-sub{color:var(--muted);font-size:10.5px}
+.sc-sec{padding:7px 12px;border-bottom:1px solid #f0f1f3}
+.sc-t{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-2);margin-bottom:4px}
+.sc-kv{display:grid;grid-template-columns:1fr 1fr;gap:1px 12px}
+.kv{display:flex;justify-content:space-between;gap:6px}
+.kv span{color:var(--muted)} .kv b{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:11px}
+.sc-note{color:var(--ink-2);font-size:10.8px;margin-top:4px;font-style:italic}
+.al{font-size:11px;padding:1px 0}
+.al.bad{color:var(--red-dark);font-weight:600}
+.al.ok{color:var(--good)}
+.sc-foot{padding:6px 12px;color:var(--muted);font-size:10.5px;display:flex;justify-content:space-between}
+.cost-total{border-top-color:var(--red)}
+.about-hero{background:linear-gradient(135deg,#15181c,#2b3139);color:#fff;border-radius:10px;padding:30px 34px;margin-bottom:18px;border-left:8px solid var(--red)}
+.about-hero .eyebrow{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#c7ccd3;font-weight:700}
+.about-hero h2{margin:6px 0 4px;font-size:34px;letter-spacing:-.6px}
+.about-hero .topic{font-size:19px;font-weight:600;color:#fff;margin-top:6px}
+.about-hero .challenge{margin-top:14px;font-size:12.5px;color:#c7ccd3;max-width:820px}
+.cap-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 20px}
+.cap-grid b{font-size:12.5px}
+.cap-grid .hint{margin-top:1px}
+.legend-card{border:1px solid var(--line);border-radius:8px;padding:14px;background:#fff}
+.legend-card p{margin:8px 0 0;color:var(--ink-2);font-size:12.5px}
+details.assump{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px}
+details.assump summary{cursor:pointer;font-weight:700;font-size:13px}
+.asm-row{display:flex;gap:12px;padding:7px 0;border-bottom:1px solid #f0f1f3;font-size:12.5px}
+.asm-row:last-child{border-bottom:none}
+.asm-row b{min-width:190px}
+@media (max-width:1100px){.kpi-row.k4{grid-template-columns:repeat(2,1fr)}.cx-tiles{grid-template-columns:repeat(3,1fr)}.cap-grid{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="nav">
+    <div class="nav-brand" id="nav-brand" role="button" tabindex="0" title="Go to the Executive Dashboard"><div class="mark"></div><div><div class="t1">Command Centre</div><div class="t2">Network Sustainability &amp; Security</div></div></div>
+    <div class="nav-item active" data-view="exec">Executive Dashboard</div>
+    <div class="nav-item" data-view="site">Site Explorer</div>
+    <div class="nav-item" data-view="reco">AI Recommendations</div>
+    <div class="nav-item" data-view="maint">Maintenance</div>
+    <div class="nav-item" data-view="simulate">Simulate</div>
+    <div class="nav-item" data-view="cost">Cost</div>
+    <div class="nav-item" data-view="dataset">Dataset</div>
+    <div class="nav-item" data-view="about">About</div>
+    <div class="nav-foot"><b style="color:var(--ink-2)">Team Connected Minds</b><br>500 sites &middot; 60-day dataset &middot; API v0.3</div>
+  </nav>
+
+  <main class="main">
+    <section id="view-exec">
+      <div class="topbar"><h1>Executive Dashboard</h1>
+        <div style="text-align:right">
+          <div class="sub mono" id="exec-clock">—</div>
+          <div class="hint mono" id="exec-asof">—</div>
+        </div>
+      </div>
+      <div class="livebar">
+        <span class="tag current"><i class="pulse"></i>Live feed</span>
+        <span id="live-status">Connecting…</span>
+        <span class="hint">Site readings refresh automatically every 2 minutes. This is a simulated feed that varies around the latest recorded hour.</span>
+      </div>
+      <div class="key-strip">
+        <span><span class="tag current">Current values</span>&nbsp; what the network is doing now</span>
+        <span><span class="tag pred">Predicted values</span>&nbsp; what the AI forecasts next</span>
+        <span><span class="tag dec">Model decision</span>&nbsp; what the AI recommends doing</span>
+      </div>
+
+      <div class="band current"><div><h2>Current values</h2><div class="bsub">What the network is doing right now &middot; refreshed every 2 minutes</div></div><span class="tag current"><i class="pulse"></i>Current values</span></div>
+      <div class="kpi-row k4" id="kpi-row"><div class="loading">Loading fleet KPIs…</div></div>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Network map <span class="tag current">Current values</span></span>
+            <span class="ph-r"><select id="map-color" class="sel-sm"><option value="status">Colour: site status</option><option value="cx">Colour: customer experience</option><option value="net">Colour: network load</option></select></span></div>
+          <div id="map"></div>
+          <div class="legend" id="map-legend" style="padding:8px 14px;border-top:1px solid var(--line)"></div>
+          <div class="hint" style="padding:0 14px 10px">Hover over a site for its energy, network performance, customer experience and alerts. Click it to pin the card and open the Site Explorer.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Energy source mix <span class="tag current">Current values</span></span>
+            <span class="tabs2"><span class="tab2 active" data-mix="24h">Last 24h</span><span class="tab2" data-mix="now">Now (live)</span></span></div>
+          <div class="panel-b"><div class="chart-wrap"><canvas id="mixChart"></canvas></div>
+            <div class="hint" style="margin-top:10px;text-align:center">Grid draws from Eskom (Scope 2) &middot; diesel is the emergency backstop (Scope 1) &middot; solar is free and emission-free &middot; <b>battery</b> is stored energy that carries the load when the grid is down and the generator is off.</div></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-h"><span class="ph-l">Customer experience &amp; network performance &middot; whole network <span class="tag current">Current values</span></span><span class="hint">tiles are live &middot; charts show the last 72 h recorded</span></div>
+        <div class="panel-b">
+          <div class="cx-tiles" id="cx-tiles"></div>
+          <div class="grid2" style="margin-bottom:6px">
+            <div><div class="hint" style="font-weight:600;margin-bottom:4px">Customer-experience score and downlink throughput</div><div class="chart-wrap"><canvas id="cxChartA"></canvas></div></div>
+            <div><div class="hint" style="font-weight:600;margin-bottom:4px">Call drop rate vs network load (PRB utilisation)</div><div class="chart-wrap"><canvas id="cxChartB"></canvas></div></div>
+          </div>
+          <div class="big-note">Customer experience follows network performance: when network load (PRB) rises, call drops go up and throughput comes down. The score (0-100) blends call drop, call set-up success, downlink speed, latency and signal quality (SINR).</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Cyber &amp; physical alerts, last 7 days <span class="tag current">Current values</span></span> <span class="hint" id="cyber-count"></span></div>
+          <div class="panel-b" style="padding:0;max-height:300px;overflow:auto">
+            <table id="exec-cyber-table"><thead><tr><th>Time</th><th>Site</th><th>Severity</th><th>Reason</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Lowest customer experience right now <span class="tag current">Current values</span></span> <span class="hint">click a row to open the site</span></div>
+          <div class="panel-b" style="padding:0;max-height:300px;overflow:auto">
+            <table id="exec-worst-table"><thead><tr><th>Site</th><th>CX score</th><th>Network</th><th>PRB %</th><th>Drop %</th><th>DL Mbps</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="band pred"><div><h2>Predicted values</h2><div class="bsub">What the AI models forecast for the next 24 hours</div></div><span class="tag pred">Predicted values</span></div>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Next 24 h &middot; network load and power demand <span class="tag pred">Predicted values</span></span></div>
+          <div class="panel-b"><div class="chart-wrap tall"><canvas id="fcChartA"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Next 24 h &middot; customer experience and outage risk <span class="tag pred">Predicted values</span></span></div>
+          <div class="panel-b"><div class="cx-tiles" id="fc-tiles" style="grid-template-columns:repeat(2,1fr)"></div><div class="chart-wrap"><canvas id="fcChartB"></canvas></div>
+            <div class="hint" style="margin-top:8px" id="fc-note"></div></div>
+        </div>
+      </div>
+
+      <div class="band dec"><div><h2>Model decision</h2><div class="bsub">What the AI recommends doing, where, and what it is worth</div></div><span class="tag dec">Model decision</span></div>
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Highest-priority items right now <span class="tag dec">Model decision</span></span></div>
+          <div class="panel-b" style="padding:0;max-height:320px;overflow:auto">
+            <table id="exec-reco-table"><thead><tr><th>Site</th><th>Category</th><th>Priority</th><th>Action</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">AI orchestrator vs reactive baseline &middot; 60 days <span class="tag dec">Model decision</span></span></div>
+          <div class="panel-b" id="exec-policy"><div class="loading">Loading…</div></div>
+        </div>
+      </div>
+
+      <div class="band hist"><div><h2>Historical trend</h2><div class="bsub">Recorded over the 60-day dataset</div></div><span class="tag hist">Historical (recorded)</span></div>
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-h"><span class="ph-l">ESG trend (60 days) <span class="tag hist">Historical (recorded)</span></span></div>
+        <div class="panel-b"><div class="chart-wrap"><canvas id="esgChart"></canvas></div></div>
+      </div>
+    </section>
+
+    <section id="view-site" style="display:none">
+      <div class="topbar"><h1>Site Explorer</h1><div class="sub">Pick a site, then look at a single moment or a date range</div></div>
+      <div class="subnav">
+        <div class="t active" data-sub="snap">Snapshot</div>
+        <div class="t" data-sub="trend">Trend</div>
+      </div>
+
+      <div id="sub-snap">
+        <div class="controls">
+          <select id="site-select"><option>Loading sites…</option></select>
+          <input id="site-date" type="date">
+          <input id="site-time" type="time" value="12:00">
+          <select id="site-horizon"><option value="6">6h forecast</option><option value="12">12h</option><option value="24" selected>24h</option></select>
+          <button class="btn" id="site-go">Get snapshot</button>
+          <span class="hint" id="site-range"></span>
+        </div>
+        <div id="site-result"><div class="loading">Choose a site and time, then click "Get snapshot".</div></div>
+      </div>
+
+      <div id="sub-trend" style="display:none">
+        <div class="mini-h"><span class="tag hist">Historical (recorded)</span> <span>Actual recorded telemetry between the two dates - not a forecast.</span></div>
+        <div class="controls">
+          <select id="trend-select"></select>
+          <input id="trend-start" type="date"> <span class="hint">to</span> <input id="trend-end" type="date">
+          <button class="btn" id="trend-go">Show trend</button>
+        </div>
+        <div id="trend-result"><div class="loading">Pick a site and a date range, e.g. 22 Sep to 22 Oct.</div></div>
+      </div>
+    </section>
+
+    <section id="view-reco" style="display:none">
+      <div class="topbar"><h1>AI Recommendations</h1><div class="sub">Fleet-wide action queue, ranked by priority</div></div>
+      <div class="mini-h"><span class="tag dec">Model decision</span> <span>Every row is an action the AI recommends, with the reason behind it.</span></div>
+      <div class="controls">
+        <select id="reco-category"><option value="">All categories</option></select>
+        <select id="reco-priority"><option value="">All priorities</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+      </div>
+      <div class="panel"><div class="panel-b" style="padding:0">
+        <table id="reco-table"><thead><tr><th>Site</th><th>Category</th><th>Priority</th><th>Action</th><th>Reason</th><th>Est. kWh</th><th>Est. kgCO2e</th></tr></thead><tbody></tbody></table>
+      </div></div>
+    </section>
+
+    <section id="view-maint" style="display:none">
+      <div class="topbar"><h1>Predictive Maintenance</h1><div class="sub">Battery, generator and cooling items flagged from each site's 60-day trend, before they become emergencies</div></div>
+      <div class="mini-h"><span class="tag pred">Predicted values</span> <span>Time-to-service estimates extrapolated from each site's recorded trend.</span></div>
+      <div class="panel"><div class="panel-b" id="maint-list"><div class="loading">Loading…</div></div></div>
+    </section>
+
+    <section id="view-simulate" style="display:none">
+      <div class="topbar"><h1>Simulate</h1><div class="sub">Enter live readings from the field and get an immediate decision, or compare the fleet-wide dispatch policy</div></div>
+      <div class="subnav">
+        <div class="t active" data-sub="live">Live telemetry</div>
+        <div class="t" data-sub="policy">Fleet policy comparison</div>
+      </div>
+
+      <div id="sub-live">
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-h"><span class="ph-l">Enter current readings <span class="tag current">Current values (entered)</span></span></div>
+          <div class="panel-b">
+            <div class="form-grid">
+              <div class="field"><label>Power draw (kW)</label><input id="f-power" type="number" step="0.1" value="11.2"></div>
+              <div class="field"><label>PRB utilisation (%)</label><input id="f-prb" type="number" step="0.1" value="75.3"></div>
+              <div class="field"><label>Active users</label><input id="f-users" type="number" value="603"></div>
+              <div class="field"><label>Solar output (kW)</label><input id="f-solar" type="number" step="0.1" value="1.9"></div>
+              <div class="field"><label>Battery SOC (%)</label><input id="f-soc" type="number" step="0.1" value="88.8"></div>
+              <div class="field"><label>Battery SOH (%)</label><input id="f-soh" type="number" step="0.1" value="83.9"></div>
+              <div class="field"><label>Fuel level (%)</label><input id="f-fuel" type="number" step="0.1" value="56.4"></div>
+              <div class="field"><label>Grid up?</label><select id="f-gridup"><option value="true">Yes</option><option value="false">No</option></select></div>
+              <div class="field"><label>Call drop rate (%)</label><input id="f-drop" type="number" step="0.01" value="0.75"></div>
+              <div class="field"><label>Setup success (%)</label><input id="f-setup" type="number" step="0.1" value="99.3"></div>
+              <div class="field"><label>SINR (dB)</label><input id="f-sinr" type="number" step="0.1" value="17.7"></div>
+              <div class="field"><label>Cabinet temp (deg C)</label><input id="f-cab" type="number" step="0.1" value="26.7"></div>
+              <div class="field"><label>Failed logins (1h)</label><input id="f-logins" type="number" value="0"></div>
+              <div class="field"><label>IP scans (1h)</label><input id="f-scans" type="number" value="0"></div>
+              <div class="field"><label>Site tier</label><select id="f-tier"><option>low</option><option selected>medium</option><option>high</option></select></div>
+              <div class="field"><label>Grid reliability</label><select id="f-gridclass"><option>poor</option><option>low</option><option selected>medium</option><option>high</option></select></div>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+              <button class="btn" id="sim-go">Get decision now</button>
+              <button class="btn" style="background:#fff;color:var(--ink);border-color:var(--line-strong)" id="sim-reset">Clear comparison</button>
+              <span class="hint">Change a reading (e.g. set solar to 0) and click again to compare against your last run and check the AI's call.</span>
+            </div>
+          </div>
+        </div>
+        <div id="sim-result"></div>
+      </div>
+
+      <div id="sub-policy" style="display:none">
+        <div class="mini-h"><span class="tag dec">Model decision</span> <span>Fleet-wide dispatch policy, simulated over the full 60 days: reactive baseline vs the AI orchestrator.</span></div>
+        <div class="grid2" id="whatif-kpis"></div>
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-h">Lever-by-lever attribution</div>
+          <div class="panel-b" style="padding:0">
+            <table id="attrib-table"><thead><tr><th>Step</th><th>Diesel (L)</th><th>CO2e (t)</th><th>Cost (R m)</th><th>Availability</th><th>Risk hours</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-h">Per-site decision
+            <span class="tabs2"><span class="tab2 active" data-d="">All</span><span class="tab2" data-d="Optimise">Optimise</span><span class="tab2" data-d="Review">Review</span><span class="tab2" data-d="Do not optimise">Do not optimise</span></span>
+          </div>
+          <div class="panel-b" style="padding:0;max-height:420px;overflow:auto">
+            <table id="whatif-sites-table"><thead><tr><th>Site</th><th>Grid class</th><th>Energy saving</th><th>Risk</th><th>Decision</th><th>CO2e saved (kg)</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-dataset" style="display:none">
+      <div class="topbar"><h1>Dataset</h1><div class="sub">What the models were trained on, and a place to check your own export against the schema</div></div>
+      <div class="verdict neutral" style="margin-bottom:16px">This dataset is <b>synthetic</b> - it is generated by a physics- and research-informed simulator (weather, traffic, and power-dispatch patterns modelled on real telecom operating behaviour), not live operator telemetry. See the "Source" tile below and the project README for how it was built and validated.</div>
+      <div class="kpi-row" id="ds-kpis"><div class="loading">Loading dataset info…</div></div>
+
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-h">Data dictionary (7 telemetry groups + site characteristics)</div>
+        <div class="panel-b" id="ds-groups"><div class="loading">Loading…</div></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-h">Browse raw data</div>
+        <div class="panel-b">
+          <div class="controls" style="margin-bottom:12px">
+            <select id="ds-site"></select>
+            <button class="btn" id="ds-load">Load 50 rows</button>
+            <span class="hint" id="ds-count"></span>
+          </div>
+          <div style="overflow-x:auto"><table id="ds-table"><thead></thead><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h">Upload your own dataset</div>
+        <div class="panel-b">
+          <div class="hint" style="margin-bottom:12px">Accepts CSV or XLSX. Checked against this system's schema (48 columns across 7 groups) and previewed here.
+          This does not retrain the models live — that is a separate offline step (see the README) — it only validates and previews your file.</div>
+          <div class="upload-box" id="ds-dropzone">
+            <div style="font-weight:700;margin-bottom:6px">Drop a CSV/XLSX file here, or</div>
+            <input type="file" id="ds-file" accept=".csv,.xlsx,.xls">
+          </div>
+          <div id="ds-upload-result" style="margin-top:16px"></div>
+        </div>
+      </div>
+    </section>
+    <section id="view-cost" style="display:none">
+      <div class="topbar"><h1>Cost</h1><div class="sub">What the network costs to run, what it loses, and what the AI saves &middot; per site and overall</div></div>
+      <div class="controls">
+        <select id="cost-window"><option value="24">Last 24 hours</option><option value="168">Last 7 days</option></select>
+        <span class="hint" id="cost-range"></span>
+      </div>
+      <div class="band current"><div><h2>Cost to run the network</h2><div class="bsub">Rand cost of the AI-orchestrated operation over the selected window</div></div><span class="tag current">Current values (recorded)</span></div>
+      <div class="kpi-row k4" id="cost-kpis"><div class="loading">Loading cost…</div></div>
+      <div class="grid2">
+        <div class="panel"><div class="panel-h"><span class="ph-l">Cost over time, by component <span class="tag current">Current values (recorded)</span></span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="costTime"></canvas></div></div></div>
+        <div class="panel"><div class="panel-h"><span class="ph-l">Average cost per site, by grid reliability <span class="tag current">Current values (recorded)</span></span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="costClass"></canvas></div>
+          <div class="hint" style="margin-top:6px">Poorer grids cost more per site: more diesel, more outage-driven lost revenue and more damage exposure.</div></div></div>
+      </div>
+      <div class="grid2">
+        <div class="panel"><div class="panel-h"><span class="ph-l">What the AI saves <span class="tag dec">Model decision</span></span></div><div class="panel-b" id="cost-ai"></div></div>
+        <div class="panel"><div class="panel-h"><span class="ph-l">What drove the risk and penalty cost <span class="tag current">Current values (recorded)</span></span></div><div class="panel-b" id="cost-drivers"></div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span class="ph-l">Cost per site <span class="tag current">Current values (recorded)</span></span>
+          <span class="ph-r"><input id="cost-q" class="sel-sm" placeholder="Search site e.g. SITE_042" style="width:190px">
+            <select id="cost-sort" class="sel-sm"><option value="total">Sort: overall cost</option><option value="tariff">Sort: tariff</option><option value="diesel">Sort: diesel</option><option value="damages">Sort: damages</option><option value="esg">Sort: ESG penalties</option><option value="penalties">Sort: SLA penalties</option><option value="lost_revenue">Sort: lost revenue</option><option value="cyber">Sort: cyber response</option></select></span></div>
+        <div class="panel-b" style="padding:0;max-height:480px;overflow:auto">
+          <table class="cmp" id="cost-table"><thead><tr><th>Site</th><th>Grid</th><th class="num">Tariff</th><th class="num">Diesel</th><th class="num">Damages</th><th class="num">ESG</th><th class="num">SLA penalties</th><th class="num">Lost revenue</th><th class="num">Cyber</th><th class="num">Overall</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="hint" style="padding:8px 14px" id="cost-table-note"></div>
+      </div>
+      <details class="assump"><summary>How these costs are calculated (assumptions)</summary><div id="cost-assump" style="margin-top:10px"></div>
+        <div class="hint" style="margin-top:10px">Costs come from the AI-orchestrated simulation over the 60-day dataset and the recorded customer-experience telemetry. Rates marked "sourced" come from published figures; the rest are stated assumptions to be replaced with an operator's own rates.</div></details>
+    </section>
+
+    <section id="view-about" style="display:none">
+      <div class="about-hero">
+        <div class="eyebrow">Team</div>
+        <h2>Connected Minds</h2>
+        <div class="topic">Intelligent Telecom: Energy, Network Security &amp; ESG</div>
+        <div class="challenge">SATNAC 2026 Industry Solutions Challenge &middot; AI-Powered Sustainable Last-Mile Connectivity: optimising energy, cybersecurity and ESG for South Africa's telecom networks.</div>
+      </div>
+
+      <div class="panel" style="margin-bottom:18px;border-left:4px solid var(--red)">
+        <div class="panel-h" style="border-bottom:none;padding-bottom:4px">AI Network Sustainability &amp; Security Orchestrator <span class="hint" style="font-weight:500">- what this system does, and where to see it</span></div>
+        <div class="panel-b cap-grid" style="padding-top:6px">
+          <div><b>1. Predicts</b><div class="hint">traffic, energy demand, outages and cyber-risk &rarr; <i>Site Explorer forecasts, Maintenance, Executive Dashboard (predicted values)</i></div></div>
+          <div><b>2. Optimises</b><div class="hint">network resources against that forecast &rarr; <i>AI Recommendations, Simulate</i></div></div>
+          <div><b>3. Coordinates</b><div class="hint">battery, generator, solar and grid &rarr; <i>Simulate &middot; Fleet policy comparison</i></div></div>
+          <div><b>4. Detects</b><div class="hint">abnormal site/network behaviour &rarr; <i>Site Explorer cyber check, Recommendations</i></div></div>
+          <div><b>5. Prioritises</b><div class="hint">sites that must never lose connectivity &rarr; <i>SINR/drop guardrails on every decision</i></div></div>
+          <div><b>6. Measures</b><div class="hint">carbon, energy, security and CX KPIs &rarr; <i>Executive Dashboard, ESG trend</i></div></div>
+          <div><b>7. Shows trade-offs</b><div class="hint">cost vs connectivity vs carbon vs cyber risk &rarr; <i>Simulate comparison, financial impact panel, Cost tab</i></div></div>
+          <div><b>Control tower</b><div class="hint">one place operators check before acting &rarr; <i>the Executive Dashboard</i></div></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-h">How to read the labels on every screen</div>
+        <div class="panel-b grid3" style="margin-bottom:0">
+          <div class="legend-card"><span class="tag current">Current values</span><p>Recorded telemetry for the latest hour, plus the live feed that refreshes every 2 minutes: energy, network load, customer experience, alerts.</p></div>
+          <div class="legend-card"><span class="tag pred">Predicted values</span><p>Output of the forecasting models for the next hours: network load, power demand, grid-outage risk, and customer experience derived from the forecast load.</p></div>
+          <div class="legend-card"><span class="tag dec">Model decision</span><p>What the AI recommends doing, where and when, with the reason, the guardrails it respected and the energy, carbon and Rand impact.</p></div>
+        </div>
+        <div class="panel-b" style="padding-top:0"><span class="tag hist">Historical (recorded)</span> <span class="hint">Actual recorded telemetry over a date range or the 60-day dataset - not a forecast.</span></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel"><div class="panel-h">How the numbers are produced</div><div class="panel-b hint" style="line-height:1.7">
+          <b style="color:var(--ink)">Data.</b> A synthetic 60-day, hourly dataset for 500 South African sites (see the Dataset tab) built to mimic real telecom operating behaviour. It is not live operator telemetry.<br>
+          <b style="color:var(--ink)">Predictions.</b> LightGBM models forecast data volume, PRB utilisation and site power; a separate model estimates grid-outage risk for the next 3 hours.<br>
+          <b style="color:var(--ink)">Detection.</b> An Isolation Forest plus rule checks flag cyber and physical anomalies (brute-force logins, scans, traffic floods, theft).<br>
+          <b style="color:var(--ink)">Decisions.</b> A rules-and-simulation orchestrator decides battery, generator, solar and grid use and low-load energy saving, guarded by signal-quality (SINR) and call-drop limits so energy savings never hurt connectivity.<br>
+          <b style="color:var(--ink)">Live feed.</b> The Executive Dashboard re-reads site readings every 2 minutes. Values move around the latest recorded hour to demonstrate a live control tower; in production this would be the operator's telemetry stream.</div></div>
+        <div class="panel"><div class="panel-h">Customer-experience score</div><div class="panel-b hint" style="line-height:1.7">
+          A 0-100 score per site, built from the dataset's own customer-experience measurements:<br>
+          <b style="color:var(--ink)">30%</b> call drop rate &middot; <b style="color:var(--ink)">25%</b> call set-up success &middot; <b style="color:var(--ink)">20%</b> downlink throughput &middot; <b style="color:var(--ink)">15%</b> latency &middot; <b style="color:var(--ink)">10%</b> SINR.<br>
+          Good = 80 and above, Fair = 60 to 80, Poor = below 60. Network performance is labelled Healthy, Busy (PRB at 65% or SINR below 12 dB) or Congested (PRB at 85% or SINR below 8 dB), so the two can always be read side by side.<br>
+          The weights are a documented design choice and can be tuned to an operator's own experience index.</div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+if(window.ChartDataLabels) Chart.register(ChartDataLabels);
+const API = "";
+const $ = s => document.querySelector(s);
+async function j(url, opts){ const r = await fetch(API+url, opts); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+function fmt(n,d=1){ return (n===null||n===undefined||isNaN(n)) ? "-" : Number(n).toLocaleString(undefined,{maximumFractionDigits:d}); }
+function trendClass(v){ return v>0 ? "trend-up" : v<0 ? "trend-down" : ""; }
+function arrow(v){ return v===null||v===undefined ? "" : (v>0?"UP":v<0?"DOWN":""); }
+
+// ---------- shared helpers (labels, charts, money) ----------
+const TAGS = {current:"Current values", pred:"Predicted values", dec:"Model decision", hist:"Historical (recorded)"};
+function tag(kind, text){ return `<span class="tag ${kind}">${text||TAGS[kind]}</span>`; }
+function band(kind, title, sub){ return `<div class="band ${kind}"><div><h2>${title}</h2><div class="bsub">${sub}</div></div>${tag(kind)}</div>`; }
+const charts = {};
+function mk(sel, cfg){ if(charts[sel]) charts[sel].destroy(); charts[sel] = new Chart($(sel), cfg); return charts[sel]; }
+function zar(n){ if(n===null||n===undefined||isNaN(n)) return "-"; const a=Math.abs(n); if(a>=1e6) return "R"+fmt(n/1e6,2)+"m"; if(a>=1e4) return "R"+fmt(n/1e3,0)+"k"; return "R"+fmt(n,0); }
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+const pillCls = {Healthy:"normal", Busy:"alert", Congested:"critical", Good:"normal", Fair:"alert", Poor:"critical"};
+const COLORS = {normal:"#1a8f4c", alert:"#b8720a", backup:"#0a6ebd", critical:"#c7000b"};
+const CX_COL = {Good:"#1a8f4c", Fair:"#b8720a", Poor:"#c7000b"};
+const NET_COL = {Healthy:"#1a8f4c", Busy:"#b8720a", Congested:"#c7000b"};
+const scaleBase = {x:{ticks:{color:'#7b828c',maxTicksLimit:8,font:{size:10.5}},grid:{display:false}}};
+function fmtTimeSAST(ms){ return new Intl.DateTimeFormat("en-ZA",{timeStyle:"medium",timeZone:"Africa/Johannesburg"}).format(new Date(ms)) + " SAST"; }
+
+// ---------- navigation ----------
+function showView(v){
+  document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active", x.dataset.view===v));
+  document.querySelectorAll("main > section").forEach(s=>s.style.display="none");
+  $("#view-"+v).style.display = "block";
+  window.scrollTo(0,0);
+  if(v==="exec"){ if(!window._execLoaded) loadExec(); else if(map) setTimeout(()=>map.invalidateSize(), 60); }
+  if(v==="reco" && !window._recoLoaded) loadReco();
+  if(v==="maint" && !window._maintLoaded) loadMaint();
+  if(v==="simulate" && !window._policyLoaded) loadPolicy();
+  if(v==="cost" && !window._costLoaded) loadCost();
+  if(v==="dataset" && !window._dsLoaded) loadDataset();
+}
+document.querySelectorAll(".nav-item").forEach(el=>el.addEventListener("click", ()=>showView(el.dataset.view)));
+const brand = $("#nav-brand");   // clicking "Command Centre / Network Sustainability & Security" goes to the Executive Dashboard
+brand.addEventListener("click", ()=>showView("exec"));
+brand.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); showView("exec"); } });
+document.querySelectorAll(".subnav").forEach(nav=>{
+  nav.querySelectorAll(".t").forEach(t=>t.addEventListener("click",()=>{
+    nav.querySelectorAll(".t").forEach(x=>x.classList.remove("active")); t.classList.add("active");
+    const parent = nav.closest("section");
+    parent.querySelectorAll(":scope > div[id^=sub-]").forEach(d=>d.style.display="none");
+    parent.querySelector("#sub-"+t.dataset.sub).style.display="block";
+  }));
+});
+
+// ---------- Executive Dashboard ----------
+let map = null, markers = {}, LIVE = null, LIVE_NEXT_AT = 0, LIVE_BUSY = false, mapMode = "status", mixMode = "24h", MIX24 = null, ESGD = null, prevPower = null;
+const safe = p => p.catch(e=>{ console.error(e); return null; });
+
+async function loadExec(){
+  window._execLoaded = true;
+  startTicker();
+  const [live, cxf, fc, mix, esg, reco, alerts, wi] = await Promise.all([
+    safe(j("/api/live")), safe(j("/api/cx/fleet?hours=72")), safe(j("/api/forecast/fleet")), safe(j("/api/esg/mix")),
+    safe(j("/api/esg/daily")), safe(j("/api/recommendations?priority=high")), safe(j("/api/cyber/alerts")), safe(j("/api/whatif/baseline_vs_smart"))]);
+  ESGD = esg; MIX24 = mix;
+  if(live){
+    $("#exec-asof").textContent = "Latest recorded hour: " + live.kpis.as_of + " (simulated dataset)";
+    initMap(live); applyLive(live);
+  } else { $("#kpi-row").innerHTML = `<div class="loading">Could not load live data. Is the API running?</div>`; }
+  renderMix(); renderCxCharts(cxf); renderForecast(fc); renderAlerts(alerts); renderDecisions(reco, wi, live); renderEsg(esg);
+}
+
+function startTicker(){
+  if(window._ticker) return; window._ticker = true;
+  const tick = ()=>{
+    $("#exec-clock").textContent = "Live: " + new Intl.DateTimeFormat("en-ZA",{dateStyle:"medium",timeStyle:"medium",timeZone:"Africa/Johannesburg"}).format(new Date()) + " SAST";
+    const left = Math.max(0, Math.round((LIVE_NEXT_AT - Date.now())/1000)), c = $("#live-count");
+    if(c) c.textContent = Math.floor(left/60) + ":" + String(left%60).padStart(2,"0");
+    if(LIVE && Date.now() >= LIVE_NEXT_AT && !LIVE_BUSY) refreshLive();
+  };
+  tick(); setInterval(tick, 1000);
+}
+async function refreshLive(){
+  LIVE_BUSY = true;
+  try{ applyLive(await j("/api/live")); }
+  catch(e){ console.error(e); LIVE_NEXT_AT = Date.now() + 15000; }
+  finally{ LIVE_BUSY = false; }
+}
+function applyLive(l){
+  LIVE = l; LIVE_NEXT_AT = Date.now() + (l.next_update_in_s + 1) * 1000;
+  renderKpis(l); updateMap(l); renderCxTiles(l); renderWorst(l);
+  if(mixMode === "now") renderMix();
+  $("#live-status").innerHTML = `Last update <b>${fmtTimeSAST(l.updated_ms)}</b> &middot; next update in <b id="live-count">-</b>`;
+}
+
+function renderKpis(l){
+  const k = l.kpis, f = l.fleet, sc = k.status_counts || {};
+  const yday = ESGD && ESGD.length > 1 ? ESGD[ESGD.length-2] : null;
+  const ech = yday ? (k.energy_24h_kwh - yday.energy_kwh) / yday.energy_kwh * 100 : null;
+  const pch = prevPower ? (f.power_now_kw - prevPower) / prevPower * 100 : null;
+  prevPower = f.power_now_kw;
+  const dir = v => v>0 ? "up" : v<0 ? "down" : "";
+  const cxCls = f.cx_score >= 80 ? "good" : f.cx_score >= 60 ? "warn" : "bad";
+  $("#kpi-row").innerHTML = `
+    <div class="kpi ${sc.critical?'bad':''}"><div class="label">SITES MONITORED</div><div class="value">${fmt(k.sites,0)}</div><div class="sub">${sc.normal||0} normal &middot; ${sc.alert||0} alert &middot; ${sc.backup||0} backup &middot; ${sc.critical||0} critical</div></div>
+    <div class="kpi"><div class="label">POWER DRAW NOW</div><div class="value">${fmt(f.power_now_kw/1000,2)} <span class="u">MW</span></div><div class="sub ${dir(pch)}">${pch!==null?(pch>0?'UP ':pch<0?'DOWN ':'')+fmt(Math.abs(pch),1)+'% since last update':'moves with network load'}</div></div>
+    <div class="kpi"><div class="label">ENERGY (24H)</div><div class="value">${fmt(k.energy_24h_kwh/1000,1)} <span class="u">MWh</span></div><div class="sub ${dir(ech)}">${ech!==null?(ech>0?'UP ':ech<0?'DOWN ':'')+fmt(Math.abs(ech),1)+'% vs yesterday':'-'}</div></div>
+    <div class="kpi good"><div class="label">RENEWABLE SHARE (NOW)</div><div class="value">${fmt(f.renewable_now_pct,1)}%</div><div class="sub">24 h average ${fmt(k.renewable_24h_pct,1)}% &middot; solar used vs total load</div></div>
+    <div class="kpi warn"><div class="label">CO2E (24H)</div><div class="value">${fmt(k.co2e_24h_kg/1000,2)} <span class="u">t</span></div><div class="sub">Scope 1 + Scope 2</div></div>
+    <div class="kpi ${k.cyber_alerts_24h>50?'bad':'warn'}"><div class="label">CYBER ALERTS (24H)</div><div class="value">${fmt(k.cyber_alerts_24h,0)}</div><div class="sub">${f.sites_with_cyber_24h} sites with cyber alerts &middot; ${f.sites_with_physical} with physical alerts</div></div>
+    <div class="kpi ${cxCls}"><div class="label">CUSTOMER EXPERIENCE</div><div class="value">${fmt(f.cx_score,1)} <span class="u">/ 100</span></div><div class="sub">${f.sites_cx_good} good &middot; ${f.sites_cx_fair} fair &middot; ${f.sites_cx_poor} poor sites</div></div>
+    <div class="kpi ${f.sites_congested>0?'warn':'good'}"><div class="label">NETWORK LOAD (PRB)</div><div class="value">${fmt(f.avg_prb_pct,1)}%</div><div class="sub">${f.sites_congested} sites congested &middot; ${fmt(f.active_users,0)} active users</div></div>`;
+}
+
+// ----- map with hover card -----
+function modeColor(s){ return mapMode==="cx" ? CX_COL[s.cx_label] : mapMode==="net" ? NET_COL[s.net_status] : (COLORS[s.status] || "#888"); }
+function renderLegend(){
+  const items = mapMode==="cx" ? [["Good","#1a8f4c"],["Fair","#b8720a"],["Poor","#c7000b"]]
+    : mapMode==="net" ? [["Healthy","#1a8f4c"],["Busy","#b8720a"],["Congested","#c7000b"]]
+    : [["Normal","#1a8f4c"],["Alert","#b8720a"],["Backup","#0a6ebd"],["Critical","#c7000b"]];
+  $("#map-legend").innerHTML = items.map(([n,c])=>`<span><span class="dot" style="background:${c}"></span>${n}</span>`).join("");
+}
+function kv(k,v){ return `<div class="kv"><span>${k}</span><b>${v}</b></div>`; }
+function siteCard(s, pin){
+  const risk = (s.outage_risk_3h===null||s.outage_risk_3h===undefined) ? "grid down" : fmt(s.outage_risk_3h*100,1)+"%";
+  const cy = s.cyber_n>0 ? `<div class="al bad">${s.cyber_text}</div>` : `<div class="al ok">No cyber alerts in the last 24 h</div>`;
+  const ph = s.phys.length ? s.phys.map(x=>`<div class="al bad">${x}</div>`).join("") : `<div class="al ok">No physical alerts</div>`;
+  return `<div class="sc">
+    <div class="sc-h"><div><b>${s.site_id}</b><div class="sc-sub">${s.tier} tier &middot; ${s.grid_class} grid</div></div><span class="pill ${s.status}">${s.status}</span></div>
+    <div class="sc-sec"><div class="sc-t"><span>Energy</span>${tag("current")}</div><div class="sc-kv">
+      ${kv("Grid", s.grid_up?"Up":"Down")}${kv("Source", s.source)}${kv("Power", fmt(s.power_kw)+" kW")}${kv("Battery", fmt(s.soc,0)+"%")}
+      ${kv("Solar", fmt(s.solar_kw)+" kW")}${kv("Fuel", fmt(s.fuel,0)+"%")}${kv("Outage risk 3h", risk+" (pred.)")}${kv("Cost, 24 h", zar(s.cost24h))}</div></div>
+    <div class="sc-sec"><div class="sc-t"><span>Network performance</span>${tag("current")}</div>
+      <div style="margin-bottom:3px"><span class="pill ${pillCls[s.net_status]}">${s.net_status}</span></div><div class="sc-kv">
+      ${kv("PRB load", fmt(s.prb,0)+"%")}${kv("Active users", fmt(s.users,0))}${kv("Data volume", fmt(s.vol)+" GB")}${kv("SINR", fmt(s.sinr)+" dB")}${kv("RSRP", fmt(s.rsrp,0)+" dBm")}${kv("Cabinet", fmt(s.cab_temp,0)+" C")}</div></div>
+    <div class="sc-sec"><div class="sc-t"><span>Customer experience</span>${tag("current")}</div>
+      <div style="margin-bottom:3px"><span class="pill ${pillCls[s.cx_label]}">${s.cx_label}</span> <b class="mono">${fmt(s.cx_score,0)}/100</b></div><div class="sc-kv">
+      ${kv("Download", fmt(s.dl)+" Mbps")}${kv("Upload", fmt(s.ul)+" Mbps")}${kv("Latency", fmt(s.latency_ms)+" ms")}${kv("Call set-up", fmt(s.setup,1)+"%")}${kv("Call drop", fmt(s.drop,2)+"%")}</div>
+      <div class="sc-note">${s.align}</div></div>
+    <div class="sc-sec"><div class="sc-t"><span>Cyber &amp; physical alerts</span>${tag("current")}</div>
+      <div><b>Cyber:</b></div>${cy}<div style="margin-top:3px"><b>Physical:</b></div>${ph}</div>
+    <div class="sc-foot"><span>${pin?'':'Click to pin this card'}</span></div>
+    ${pin?`<div style="padding:0 12px 10px"><button class="btn-red-sm" onclick="openSite('${s.site_id}')">Open ${s.site_id} in Site Explorer</button></div>`:''}
+  </div>`;
+}
+function initMap(l){
+  if(map) return;
+  map = L.map('map',{zoomControl:true,attributionControl:true}).setView([-29.0,25.0],5.3);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:12,attribution:'&copy; OpenStreetMap'}).addTo(map);
+  l.sites.forEach(s=>{
+    const m = L.circleMarker([s.lat,s.lon],{radius:5,weight:1,fillOpacity:.85,color:modeColor(s),fillColor:modeColor(s)}).addTo(map);
+    m._site = s;
+    m.bindTooltip(()=>siteCard(m._site,false),{sticky:true,direction:"top",opacity:1,className:"site-tip",offset:[0,-8]});
+    m.bindPopup(()=>siteCard(m._site,true),{maxWidth:330,minWidth:318,autoPanPadding:[30,30]});
+    m.on("mouseover",()=>m.setStyle({weight:3,radius:8}));
+    m.on("mouseout",()=>m.setStyle({weight:1,radius:5}));
+    markers[s.site_id] = m;
+  });
+  renderLegend();
+  $("#map-color").addEventListener("change", e=>{ mapMode = e.target.value; renderLegend(); if(LIVE) updateMap(LIVE); });
+}
+function updateMap(l){
+  if(!map) return;
+  l.sites.forEach(s=>{
+    const m = markers[s.site_id]; if(!m) return;
+    m._site = s; const c = modeColor(s);
+    m.setStyle({color:c, fillColor:c});
+    if(m.isPopupOpen && m.isPopupOpen()) m.setPopupContent(siteCard(s,true));
+  });
+}
+async function openSite(id){
+  showView("site");
+  document.querySelector('#view-site .subnav .t[data-sub="snap"]').click();
+  await SITE_READY;
+  $("#site-select").value = id;
+  $("#site-go").click();
+}
+
+// ----- energy source mix (grid, diesel, solar, BATTERY) -----
+document.querySelectorAll("[data-mix]").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll("[data-mix]").forEach(x=>x.classList.remove("active")); t.classList.add("active");
+  mixMode = t.dataset.mix; renderMix();
+}));
+function renderMix(){
+  const m = (mixMode==="now" && LIVE) ? LIVE.mix_now : MIX24; if(!m) return;
+  const vals = [m.grid_kwh, m.diesel_generator_kwh, m.solar_kwh, m.battery_kwh], pct = [m.grid_pct, m.diesel_pct, m.solar_pct, m.battery_pct];
+  const names = ['Grid (Eskom)','Diesel generator','Solar PV','Battery'], cols = ['#1c3d5a','#d9720a','#1a8f4c','#7b3fb0'];
+  const now = mixMode==="now", unit = now ? "MW" : "MWh";
+  const totalTxt = fmt(m.total_kwh/1000, now?2:1) + " " + unit, subTxt = now ? "RIGHT NOW (LIVE)" : "TOTAL, LAST " + (m.hours||24) + "H";
+  const centerText = {id:'centerText', afterDraw(chart){
+    const {ctx, chartArea:{left,right,top,bottom}} = chart; ctx.save();
+    const cx=(left+right)/2, cy=(top+bottom)/2; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font='700 20px IBM Plex Mono, monospace'; ctx.fillStyle='#15181c'; ctx.fillText(totalTxt, cx, cy-9);
+    ctx.font='600 10.5px Inter, sans-serif'; ctx.fillStyle='#7b828c'; ctx.fillText(subTxt, cx, cy+12); ctx.restore();
+  }};
+  mk("#mixChart",{type:'doughnut', data:{labels:names, datasets:[{data:vals, backgroundColor:cols, borderColor:'#fff', borderWidth:3, hoverOffset:6}]}, plugins:[centerText],
+    options:{responsive:true, maintainAspectRatio:false, cutout:'66%', animation:{duration:350},
+      plugins:{
+        legend:{position:'bottom', labels:{color:'#4a5159', boxWidth:11, padding:12, font:{size:11.5, weight:'600'},
+          generateLabels(chart){ return chart.data.labels.map((l,i)=>({text:`${l}  ${fmt(pct[i],1)}%`, fillStyle:cols[i], strokeStyle:cols[i], pointStyle:'rectRounded', index:i})); }}},
+        tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${fmt(ctx.raw/1000,2)} ${unit} (${fmt(pct[ctx.dataIndex],1)}%)`}},
+        datalabels:{color:'#fff', font:{weight:'700', size:12}, formatter:(v,ctx)=> pct[ctx.dataIndex] > 6 ? Math.round(pct[ctx.dataIndex]) + '%' : ''}}}});
+}
+
+// ----- customer experience (whole network) -----
+function renderCxTiles(l){
+  const f = l.fleet, lbl = f.cx_score>=80 ? "Good" : f.cx_score>=60 ? "Fair" : "Poor";
+  const t = (label,val,sub)=>`<div class="metric"><div class="l">${label}</div><div class="v">${val}</div><div class="hint">${sub}</div></div>`;
+  $("#cx-tiles").innerHTML =
+    t("CX SCORE", `${fmt(f.cx_score,1)}<span class="hint"> /100</span>`, `<span class="pill ${pillCls[lbl]}">${lbl}</span>`) +
+    t("CALL DROP RATE", fmt(f.call_drop_pct,2)+"%", "target below 1%") +
+    t("CALL SET-UP SUCCESS", fmt(f.call_setup_pct,2)+"%", "target above 95%") +
+    t("DOWNLOAD SPEED", fmt(f.dl_mbps,1)+" Mbps", "average per site") +
+    t("LATENCY", fmt(f.latency_ms,1)+" ms", "round-trip time") +
+    t("SITES IN POOR CX", fmt(f.sites_cx_poor,0), `${f.sites_cx_fair} fair &middot; ${f.sites_congested} congested`);
+}
+function renderCxCharts(cxf){
+  if(!cxf) return;
+  const s = cxf.series, labels = s.timestamps.map(t=>t.slice(5,13).replace("T"," ")+"h");
+  const opt = (yT,y1T)=>({responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{...scaleBase,
+    y:{ticks:{color:'#7b828c',font:{size:10.5}},grid:{color:'#f0f1f3'},title:{display:true,text:yT,color:'#7b828c',font:{size:10.5,weight:'600'}}},
+    y1:{position:'right',ticks:{color:'#7b828c',font:{size:10.5}},grid:{display:false},title:{display:true,text:y1T,color:'#7b828c',font:{size:10.5,weight:'600'}}}},
+    plugins:{legend:{position:'top',align:'end',labels:{color:'#4a5159',boxWidth:11,usePointStyle:true,font:{size:11,weight:'600'}}}, datalabels:{display:false}}});
+  mk("#cxChartA",{type:'line', data:{labels, datasets:[
+    {label:'CX score (0-100)', data:s.cx_score, borderColor:'#1a8f4c', backgroundColor:'rgba(26,143,76,.08)', fill:true, tension:.3, pointRadius:0, borderWidth:2.5},
+    {label:'Download (Mbps)', data:s.dl_mbps, borderColor:'#0a6ebd', backgroundColor:'transparent', tension:.3, pointRadius:0, borderWidth:2, yAxisID:'y1'}]}, options:opt('CX score','Mbps')});
+  mk("#cxChartB",{type:'line', data:{labels, datasets:[
+    {label:'Call drop rate (%)', data:s.call_drop_pct, borderColor:'#c7000b', backgroundColor:'transparent', tension:.3, pointRadius:0, borderWidth:2.5},
+    {label:'Network load, PRB (%)', data:s.prb_pct, borderColor:'#b8720a', backgroundColor:'rgba(184,114,10,.08)', fill:true, tension:.3, pointRadius:0, borderWidth:2, yAxisID:'y1'}]}, options:opt('Call drop %','PRB %')});
+}
+function renderWorst(l){
+  const rows = [...l.sites].sort((a,b)=>a.cx_score-b.cx_score).slice(0,10);
+  $("#exec-worst-table tbody").innerHTML = rows.map(s=>`<tr class="clickable" onclick="openSite('${s.site_id}')"><td class="mono">${s.site_id}</td>
+    <td><span class="pill ${pillCls[s.cx_label]}">${fmt(s.cx_score,0)}</span></td><td><span class="pill ${pillCls[s.net_status]}">${s.net_status}</span></td>
+    <td class="mono">${fmt(s.prb,0)}</td><td class="mono">${fmt(s.drop,2)}</td><td class="mono">${fmt(s.dl,0)}</td></tr>`).join("");
+}
+
+// ----- predicted values (next 24 h) -----
+function renderForecast(fc){
+  if(!fc || !fc.available){ $("#fc-tiles").innerHTML = `<div class="hint">Forecast table not available.</div>`; return; }
+  const labels = fc.timestamps.map(t=>t.slice(11,16));
+  const opt = (yT,y1T,y1max)=>({responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, scales:{...scaleBase,
+    y:{ticks:{color:'#7b828c',font:{size:10.5}},grid:{color:'#f0f1f3'},title:{display:true,text:yT,color:'#7b828c',font:{size:10.5,weight:'600'}}},
+    y1:{position:'right',max:y1max,ticks:{color:'#7b828c',font:{size:10.5}},grid:{display:false},title:{display:true,text:y1T,color:'#7b828c',font:{size:10.5,weight:'600'}}}},
+    plugins:{legend:{position:'top',align:'end',labels:{color:'#4a5159',boxWidth:11,usePointStyle:true,font:{size:11,weight:'600'}}}, datalabels:{display:false}}});
+  mk("#fcChartA",{type:'line', data:{labels, datasets:[
+    {label:'Power demand (MW)', data:fc.power_mw, borderColor:'#b8720a', backgroundColor:'transparent', borderDash:[6,4], tension:.3, pointRadius:0, borderWidth:2.5},
+    {label:'Network load, PRB (%)', data:fc.prb_pct, borderColor:'#7a4fc4', backgroundColor:'rgba(122,79,196,.08)', fill:true, borderDash:[6,4], tension:.3, pointRadius:0, borderWidth:2, yAxisID:'y1'}]}, options:opt('MW','PRB %',100)});
+  mk("#fcChartB",{type:'line', data:{labels, datasets:[
+    {label:'Predicted CX score', data:fc.cx_score, borderColor:'#1a8f4c', backgroundColor:'transparent', borderDash:[6,4], tension:.3, pointRadius:0, borderWidth:2.5},
+    {label:'Predicted call drop (%)', data:fc.call_drop_pct, borderColor:'#c7000b', backgroundColor:'transparent', borderDash:[6,4], tension:.3, pointRadius:0, borderWidth:2, yAxisID:'y1'}]}, options:opt('CX score','Call drop %')});
+  const minCx = Math.min(...fc.cx_score), minLbl = minCx>=80 ? "Good" : minCx>=60 ? "Fair" : "Poor";
+  const t = (label,val,sub)=>`<div class="metric"><div class="l">${label}</div><div class="v">${val}</div><div class="hint">${sub}</div></div>`;
+  $("#fc-tiles").innerHTML =
+    t("PEAK NETWORK LOAD", fmt(fc.peak_prb_pct,1)+"%", `PRB, around +${fc.peak_prb_hour} h`) +
+    t("LOWEST PREDICTED CX", fmt(minCx,1), `<span class="pill ${pillCls[minLbl]}">${minLbl}</span> &middot; ${fc.sites_poor_cx_peak} sites could dip to Poor`) +
+    t("GRID OUTAGE RISK (3 H)", fc.avg_outage_risk_pct!==null ? fmt(fc.avg_outage_risk_pct,1)+"%" : "-", "average across sites with grid up") +
+    t("SITES AT HIGH OUTAGE RISK", fmt(fc.sites_outage_risk_high,0), `risk 13% or more &middot; ${fc.grid_down_now} sites already on backup`);
+  $("#fc-note").textContent = fc.note;
+}
+
+// ----- alerts, decisions, ESG -----
+function renderAlerts(alerts){
+  if(!alerts){ return; }
+  $("#cyber-count").textContent = `${alerts.length} total`;
+  const sevRank = {critical:0, high:1, medium:2};
+  const sorted = [...alerts].sort((a,b)=>(sevRank[a.severity]??3)-(sevRank[b.severity]??3) || new Date(b.time)-new Date(a.time));
+  $("#exec-cyber-table tbody").innerHTML = sorted.slice(0,30).map(a=>
+    `<tr class="clickable" onclick="openSite('${a.site_id}')"><td class="mono" style="font-size:11px;white-space:nowrap">${a.time.slice(0,16).replace('T',' ')}</td><td class="mono">${a.site_id}</td><td><span class="pill ${a.severity}">${a.severity}</span></td><td>${a.reason}</td></tr>`).join("") || `<tr><td colspan=4 class="hint">No alerts in the last 7 days.</td></tr>`;
+}
+function renderDecisions(reco, wi, live){
+  if(reco) $("#exec-reco-table tbody").innerHTML = reco.slice(0,8).map(r=>
+    `<tr class="clickable" onclick="openSite('${r.site_id}')"><td class="mono">${r.site_id}</td><td>${r.category}</td><td><span class="pill ${r.priority}">${r.priority}</span></td><td>${r.action}</td></tr>`).join("") || `<tr><td colspan=4 class="hint">No high-priority items.</td></tr>`;
+  const box = $("#exec-policy");
+  if(!wi){ box.innerHTML = `<div class="hint">Policy comparison not available.</div>`; return; }
+  const b = wi.baseline, s = wi.smart, k = live ? live.kpis : null;
+  const TARIFF = 2.80;   // R/kWh, see pipeline/s5_orchestrator.py CFG
+  const monthly = k ? k.potential_saving_kwh_24h * TARIFF * 30 : null;
+  const row = (n,bv,sv,d,goodDown)=>{ const pc = bv ? (sv-bv)/bv*100 : 0, good = goodDown ? pc<0 : pc>0;
+    return `<tr><td class="label">${n}</td><td>${fmt(bv,d)}</td><td>${fmt(sv,d)}</td><td class="${Math.abs(pc)<0.005?'':good?'delta-good':'delta-bad'}">${pc>0?'+':''}${fmt(pc,2)}%</td></tr>`; };
+  const chips = k && k.recs ? Object.entries(k.recs).map(([c,n])=>`<span class="chip">${c}: ${fmt(n,0)}</span>`).join("") : "";
+  box.innerHTML = `
+    <table class="compare-table"><thead><tr><th></th><th>Reactive baseline</th><th>AI orchestrator</th><th>Change</th></tr></thead><tbody>
+      ${row("Diesel burned (L)", b.diesel_l, s.diesel_l, 0, true)}${row("CO2e (t)", b.co2e_t, s.co2e_t, 1, true)}
+      ${row("Energy cost (R m)", b.cost_zar_m, s.cost_zar_m, 2, true)}${row("Network availability (%)", b.availability_pct, s.availability_pct, 3, false)}</tbody></table>
+    ${monthly!==null?`<div class="big-note" style="background:#e9f7ef;border-color:#bfe3cd;color:#136339"><b>Estimated monthly saving: R${fmt(monthly/1000,0)}k</b> if today's open energy-saving recommendations repeat daily.</div>`:''}
+    ${chips?`<div style="margin-top:10px"><div class="hint" style="margin-bottom:4px">Open recommendations by category</div><div class="chips">${chips}</div></div>`:''}`;
+}
+function renderEsg(esg){
+  if(!esg) return;
+  const co2Series = esg.map(r=>(r.scope1_kg+r.scope2_kg)/1000);
+  const avgCo2 = co2Series.reduce((a,b)=>a+b,0)/co2Series.length, avgRenew = esg.reduce((a,r)=>a+r.renewable_pct,0)/esg.length;
+  const esgCtx = $("#esgChart").getContext('2d'), barGrad = esgCtx.createLinearGradient(0,0,0,220);
+  barGrad.addColorStop(0,'#1c3d5a'); barGrad.addColorStop(1,'#4a7396');
+  mk("#esgChart",{data:{labels:esg.map(r=>r.day.slice(5)),datasets:[
+    {type:'bar',label:'Scope 1+2 (t CO2e)',data:co2Series,backgroundColor:barGrad,borderRadius:3,maxBarThickness:14,order:2},
+    {type:'line',label:'Renewable %',data:esg.map(r=>r.renewable_pct),borderColor:'#c7000b',backgroundColor:'rgba(199,0,11,.08)',fill:true,tension:.35,pointRadius:0,borderWidth:2.5,yAxisID:'y1',order:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    scales:{
+      x:{ticks:{color:'#7b828c',maxTicksLimit:10,font:{size:10.5}},grid:{display:false}},
+      y:{ticks:{color:'#7b828c',font:{size:10.5}},grid:{color:'#f0f1f3'},title:{display:true,text:'t CO2e / day',color:'#7b828c',font:{size:10.5,weight:'600'}}},
+      y1:{position:'right',min:0,max:100,ticks:{color:'#7b828c',font:{size:10.5}},grid:{display:false},title:{display:true,text:'Renewable %',color:'#7b828c',font:{size:10.5,weight:'600'}}}},
+    plugins:{legend:{position:'top',align:'end',labels:{color:'#4a5159',boxWidth:11,usePointStyle:true,font:{size:11,weight:'600'}}},
+      datalabels:{display:false},
+      tooltip:{backgroundColor:'#15181c',titleFont:{size:12,weight:'700'},bodyFont:{size:11.5},padding:10,cornerRadius:6}}}});
+  const pb = $("#esgChart").closest(".panel-b");
+  if(!pb.querySelector(".esg-sum")) pb.insertAdjacentHTML('afterbegin', `
+    <div class="esg-sum" style="display:flex;gap:24px;margin-bottom:10px">
+      <div><span class="hint">60-day average</span><div class="mono" style="font-size:15px;font-weight:700;color:var(--ink)">${fmt(avgCo2,1)} t CO2e/day</div></div>
+      <div><span class="hint">Avg renewable share</span><div class="mono" style="font-size:15px;font-weight:700;color:var(--good)">${fmt(avgRenew,1)}%</div></div>
+    </div>`);
+}
+
+async function initSiteExplorer(){
+  const meta = await j("/api/meta");
+  const opts = meta.sites.map(s=>`<option>${s}</option>`).join("");
+  $("#site-select").innerHTML = opts; $("#trend-select").innerHTML = opts;
+  const dmin = meta.date_min.slice(0,10), dmax = meta.date_max.slice(0,10);
+  $("#site-date").min = dmin; $("#site-date").max = dmax; $("#site-date").value = dmax;
+  $("#trend-start").min = dmin; $("#trend-start").max = dmax; $("#trend-end").min = dmin; $("#trend-end").max = dmax;
+  $("#trend-start").value = dmin; $("#trend-end").value = dmax;
+  $("#site-time").value = meta.date_max.slice(11,16);   // default to the latest recorded hour so it matches the Executive Dashboard
+  $("#site-range").textContent = `data available ${dmin} to ${dmax}`;
+}
+const SITE_READY = initSiteExplorer();
+
+$("#site-go").addEventListener("click", async ()=>{
+  const site = $("#site-select").value, date = $("#site-date").value, time = $("#site-time").value, h = $("#site-horizon").value;
+  if(!site||!date) return;
+  $("#site-result").innerHTML = `<div class="loading">Querying ${site} @ ${date} ${time}...</div>`;
+  try{ renderSite(await j(`/api/site/${site}?when=${encodeURIComponent(date+" "+time)}&horizon_h=${h}`)); }
+  catch(e){ $("#site-result").innerHTML = `<div class="loading">Error: ${e.message}</div>`; }
+});
+
+function decisionBanner(d){
+  return `<div class="decision-banner ${d.priority}">
+      <div class="cat">${d.category} &middot; ${d.priority} priority</div>
+      <div class="act">${d.action}</div>
+      <div class="why">${d.reason}</div>
+      ${d.potential_issue?`<div class="issue">Potential issue: ${d.potential_issue}</div>`:''}
+      ${(d.est_kwh||d.est_zar)?`<div class="impact"><span>${fmt(d.est_kwh)} kWh</span><span>${fmt(d.est_kg_co2e)} kg CO2e</span><span>R${fmt(Math.abs(d.est_zar))} ${d.est_zar<0?'avoided':''}</span></div>`:''}
+    </div>`;
+}
+
+function renderSite(r){
+  const c = r.current, p = r.predictions_next_h, fin = r.financial_impact_this_hour_zar, esg = r.esg_this_hour, cy = r.cybersecurity, sum = r.prediction_summary, cx = r.cx || null;
+  const cxLbl = cx ? cx.label : null;
+  const maintHtml = (r.maintenance && r.maintenance.length) ? r.maintenance.map(m=>`
+      <div class="maint-item"><div class="maint-l"><div class="c">${m.component} <span class="pill ${m.urgency}">${m.urgency}</span></div><div class="r">${m.reason}</div></div>
+      <div class="maint-r">${m.eta_days!==null?`<div class="hint">~${fmt(m.eta_days,0)} days</div>`:''}</div></div>`).join("") : `<div class="hint">No maintenance expected soon.</div>`;
+  const costRows = cx && cx.cost_24h ? [["Grid tariff","tariff"],["Diesel","diesel"],["Damages","damages"],["ESG / carbon","esg"],["SLA penalties","penalties"],["Lost revenue (unmet demand)","lost_revenue"],["Cyber response","cyber"]]
+    .map(([n,k])=>`<div class="fin-row"><span class="n">${n}</span><span class="v">R${fmt(cx.cost_24h[k],0)}</span></div>`).join("") + `<div class="fin-total"><span>Total, last 24 h</span><span class="mono">R${fmt(cx.cost_24h.total,0)}</span></div>` : "";
+  const html = `
+    ${band("current","Current values",`Recorded telemetry for ${r.site_id} at ${r.as_of}`)}
+    <div class="summary-band">
+      <div class="summary-item"><div class="l">Network availability (7-day)</div><div class="v">${fmt(sum.network_availability_pct)}%</div></div>
+      <div class="summary-item"><div class="l">Energy today</div><div class="v ${trendClass(sum.energy_change_pct)}">${fmt(sum.energy_today_kwh)} kWh ${sum.energy_change_pct!==null?arrow(sum.energy_change_pct)+' '+fmt(Math.abs(sum.energy_change_pct))+'%':''}</div></div>
+      <div class="summary-item"><div class="l">CO2 footprint today</div><div class="v ${trendClass(sum.co2_change_pct)}">${fmt(sum.co2_today_kg)} kg ${sum.co2_change_pct!==null?arrow(sum.co2_change_pct)+' '+fmt(Math.abs(sum.co2_change_pct))+'%':''}</div></div>
+      <div class="summary-item"><div class="l">Cyber risk now</div><div class="v" style="color:${sum.cyber_alert_now?'var(--bad)':'var(--good)'}">${sum.cyber_alert_now?'Attention needed':'Clear'}</div></div>
+      <div class="summary-item"><div class="l">Customer experience</div><div class="v" style="color:${cx?CX_COL[cxLbl]:'inherit'}">${cx?fmt(cx.score,0)+'/100 '+cxLbl:'-'}</div></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><span class="ph-l">Current status ${tag("current")}</span> <span class="hint">${r.as_of} &middot; ${r.site_info.tier} tier &middot; ${r.site_info.grid_class} grid &middot; ${r.site_info.tech}</span></div>
+        <div class="panel-b">
+          <div class="hint" style="font-weight:700;margin-bottom:6px">ENERGY</div>
+          <div class="metric-grid" style="margin-bottom:12px">
+            <div class="metric"><div class="l">Power draw</div><div class="v">${fmt(c.energy.power_kw)} kW</div></div>
+            <div class="metric"><div class="l">Power source</div><div class="v" style="font-size:13px">${c.energy.power_source}</div></div>
+            <div class="metric"><div class="l">Battery SOC</div><div class="v">${fmt(c.energy.battery_soc_pct)}%</div></div>
+            <div class="metric"><div class="l">Solar output</div><div class="v">${fmt(c.energy.solar_kw)} kW</div></div>
+            <div class="metric"><div class="l">Fuel level</div><div class="v">${fmt(c.energy.fuel_pct)}%</div></div>
+            <div class="metric"><div class="l">Grid</div><div class="v" style="font-size:13px">${c.energy.grid_up?'Up ('+fmt(c.energy.grid_voltage_v,0)+' V)':'Down'}</div></div>
+            <div class="metric"><div class="l">Cabinet temp</div><div class="v">${fmt(c.thermal.cabinet_c)} C</div></div>
+            <div class="metric"><div class="l">Battery health (SOH)</div><div class="v">${fmt(c.energy.battery_soh_pct)}%</div></div>
+          </div>
+          <div class="hint" style="font-weight:700;margin-bottom:6px">NETWORK PERFORMANCE ${cx?`<span class="pill ${pillCls[cx.network_status]}" style="margin-left:6px">${cx.network_status}</span>`:''}</div>
+          <div class="metric-grid">
+            <div class="metric"><div class="l">PRB utilisation</div><div class="v">${fmt(c.network_demand.prb_utilization_pct)}%</div></div>
+            <div class="metric"><div class="l">Active users</div><div class="v">${fmt(c.network_demand.active_users,0)}</div></div>
+            <div class="metric"><div class="l">Data volume</div><div class="v">${fmt(c.network_demand.data_volume_gb)} GB</div></div>
+            <div class="metric"><div class="l">Busy-hour ratio</div><div class="v">${fmt(c.network_demand.busy_hour_ratio,2)}</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span class="ph-l">Customer experience ${tag("current")}</span> ${cx?`<span class="pill ${pillCls[cxLbl]}">${cxLbl} &middot; ${fmt(cx.score,0)}/100</span>`:''}</div>
+        <div class="panel-b">
+          <div class="metric-grid">
+            <div class="metric"><div class="l">Download</div><div class="v">${fmt(c.customer_experience.dl_mbps)} Mbps</div></div>
+            <div class="metric"><div class="l">Upload</div><div class="v">${fmt(c.customer_experience.ul_mbps)} Mbps</div></div>
+            <div class="metric"><div class="l">Latency</div><div class="v">${fmt(c.customer_experience.latency_ms)} ms</div></div>
+            <div class="metric"><div class="l">SINR</div><div class="v">${fmt(c.customer_experience.sinr_db)} dB</div></div>
+            <div class="metric"><div class="l">Call drop rate</div><div class="v">${fmt(c.customer_experience.call_drop_pct,2)}%</div></div>
+            <div class="metric"><div class="l">Call set-up success</div><div class="v">${fmt(c.customer_experience.call_setup_success_pct,1)}%</div></div>
+            <div class="metric"><div class="l">RSRP</div><div class="v">${fmt(c.customer_experience.rsrp_dbm,0)} dBm</div></div>
+            <div class="metric"><div class="l">Network load</div><div class="v">${fmt(c.network_demand.prb_utilization_pct,0)}%</div></div>
+          </div>
+          ${cx?`<div class="big-note">${cx.alignment}</div>
+          <div class="hint" style="font-weight:600;margin:10px 0 2px">Last 24 h (recorded): CX score vs network load</div><div class="chart-wrap" style="height:150px"><canvas id="siteCx1"></canvas></div>
+          <div class="hint" style="font-weight:600;margin:8px 0 2px">Last 24 h (recorded): download speed and call drop</div><div class="chart-wrap" style="height:150px"><canvas id="siteCx2"></canvas></div>`:''}
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><span class="ph-l">Financial impact this hour ${tag("current")}</span> <span class="mono" style="font-size:14px">R${fmt(fin.total_zar)}</span></div>
+        <div class="panel-b">
+          <div class="fin-row"><span class="n">Energy (grid + diesel)</span><span class="v">R${fmt(fin.energy_zar)}</span></div>
+          <div class="fin-row"><span class="n">Battery wear</span><span class="v">R${fmt(fin.battery_wear_zar)}</span></div>
+          <div class="fin-row"><span class="n">Carbon (ESG shadow price)</span><span class="v">R${fmt(fin.carbon_shadow_zar)}</span></div>
+          <div class="fin-row"><span class="n">Revenue at risk</span><span class="v">R${fmt(fin.revenue_at_risk_zar)}</span></div>
+          <div class="fin-row"><span class="n">Incident / cyber</span><span class="v">R${fmt(fin.incident_zar)}</span></div>
+          <div class="fin-total"><span>Total this hour</span><span class="mono">R${fmt(fin.total_zar)}</span></div>
+          <div class="fin-note">${fin.arpu_note}</div>
+          ${costRows?`<div class="hint" style="font-weight:700;margin:14px 0 4px">COST, LAST 24 H (RECORDED)</div>${costRows}`:''}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span class="ph-l">ESG &amp; cybersecurity ${tag("current")}</span></div>
+        <div class="panel-b">
+          <div class="metric-grid" style="grid-template-columns:repeat(2,1fr)">
+            <div class="metric"><div class="l">Scope 1 (diesel)</div><div class="v">${fmt(esg.scope1_kg_co2e,2)} kg</div></div>
+            <div class="metric"><div class="l">Scope 2 (grid)</div><div class="v">${fmt(esg.scope2_kg_co2e,2)} kg</div></div>
+            <div class="metric"><div class="l">Renewable share</div><div class="v">${fmt(esg.renewable_share_pct,1)}%</div></div>
+            <div class="metric"><div class="l">Battery recycling</div><div class="v" style="font-size:12px">${esg.battery_recycling_status}</div></div>
+          </div>
+          <div style="margin-top:12px;padding:11px;border-radius:6px;border:1px solid ${cy.alert?'var(--bad)':'var(--line)'};background:${cy.alert?'var(--bad-tint)':'#fafbfc'}">
+            <div style="display:flex;justify-content:space-between"><b>${cy.alert?'Anomaly detected':'No anomaly'}</b><span class="hint mono">score ${fmt(cy.isolation_forest_score,3)}</span></div>
+            <div class="hint" style="margin-top:4px">${cy.reason}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${r.peer_comparison?`<div class="panel" style="margin-bottom:16px"><div class="panel-h"><span class="ph-l">Peer comparison ${tag("current")}</span></div><div class="panel-b hint">This site draws <b style="color:var(--ink)">${fmt(r.peer_comparison.site_kw)} kW</b> vs a <b style="color:var(--ink)">${fmt(r.peer_comparison.peer_mean_kw)} kW</b> average across ${r.peer_comparison.n_peers} comparable sites (${r.peer_comparison.pct_vs_peers>0?'+':''}${fmt(r.peer_comparison.pct_vs_peers)}%).</div></div>`:''}
+
+    ${band("pred","Predicted values",`AI forecast for the next ${p.timestamps.length} hours`)}
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><span class="ph-l">Next ${p.timestamps.length}h forecast ${tag("pred")}</span></div>
+        <div class="panel-b"><div class="chart-wrap"><canvas id="siteFc"></canvas></div>
+        <div class="hint" style="margin-top:8px">Network load (PRB) and power demand are model forecasts${cx&&cx.forecast?'; the CX score is derived from the forecast load':''}.</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><span class="ph-l">Predicted risk and outlook ${tag("pred")}</span></div>
+        <div class="panel-b">
+          <div class="metric-grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px">
+            <div class="metric"><div class="l">Grid outage risk (next 3h)</div><div class="v" style="color:${p.grid_outage_risk_next_3h>0.13?'var(--bad)':'var(--ink)'}">${p.grid_outage_risk_next_3h!==null?fmt(p.grid_outage_risk_next_3h*100,1)+'%':'Grid down now'}</div></div>
+            <div class="metric"><div class="l">Peak network load (PRB)</div><div class="v">${fmt(Math.max(...p.prb_utilization_pct),0)}%</div></div>
+            ${cx&&cx.forecast?`<div class="metric"><div class="l">Lowest predicted CX</div><div class="v" style="color:${CX_COL[cx.forecast.worst_label]}">${fmt(cx.forecast.worst_score,0)}/100 ${cx.forecast.worst_label}</div></div>`:''}
+            <div class="metric"><div class="l">Peak power demand</div><div class="v">${fmt(Math.max(...p.power_kw))} kW</div></div>
+          </div>
+          <div class="hint" style="font-weight:700;margin-bottom:2px">MAINTENANCE OUTLOOK</div>
+          ${maintHtml}
+        </div>
+      </div>
+    </div>
+
+    ${band("dec","Model decision","What the AI recommends for this site, and why")}
+    ${sum.estimated_monthly_saving_zar>0?`<div class="big-note" style="background:#e9f7ef;border-color:#bfe3cd;color:#136339;margin:0 0 12px"><b>Estimated monthly saving: R${fmt(sum.estimated_monthly_saving_zar,0)}</b> if this energy-saving action is repeated daily.</div>`:''}
+    ${r.smart_decisions.map(decisionBanner).join("")}`;
+  $("#site-result").innerHTML = html;
+
+  const lbl = p.timestamps.map(t=>t.slice(11,16));
+  const fcDatasets = [
+    {label:'Predicted PRB %',data:p.prb_utilization_pct,borderColor:'#0a6ebd',backgroundColor:'transparent',borderDash:[6,4],pointRadius:0,tension:.3},
+    {label:'Predicted power kW',data:p.power_kw,borderColor:'#b8720a',backgroundColor:'transparent',borderDash:[6,4],pointRadius:0,tension:.3,yAxisID:'y1'}];
+  if(cx && cx.forecast) fcDatasets.splice(1,0,{label:'Predicted CX score',data:cx.forecast.cx_score,borderColor:'#1a8f4c',backgroundColor:'transparent',borderDash:[6,4],pointRadius:0,tension:.3});
+  mk("#siteFc",{type:'line',data:{labels:lbl,datasets:fcDatasets},options:{responsive:true,maintainAspectRatio:false,scales:{
+    x:{ticks:{color:'#7b828c'},grid:{color:'#f0f1f3'}},y:{ticks:{color:'#7b828c'},grid:{color:'#f0f1f3'}},
+    y1:{position:'right',ticks:{color:'#7b828c'},grid:{display:false}}},plugins:{legend:{labels:{color:'#4a5159',boxWidth:12,font:{size:11}}},datalabels:{display:false}}}});
+  if(cx){
+    const h = cx.history_24h, hl = h.timestamps.map(t=>t.slice(11,16));
+    const o = (yT,y1T)=>({responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{x:{ticks:{color:'#7b828c',maxTicksLimit:8,font:{size:10}},grid:{display:false}},
+      y:{ticks:{color:'#7b828c',font:{size:10}},grid:{color:'#f0f1f3'},title:{display:true,text:yT,color:'#7b828c',font:{size:10}}},
+      y1:{position:'right',ticks:{color:'#7b828c',font:{size:10}},grid:{display:false},title:{display:true,text:y1T,color:'#7b828c',font:{size:10}}}},
+      plugins:{legend:{labels:{color:'#4a5159',boxWidth:10,font:{size:10.5}}},datalabels:{display:false}}});
+    mk("#siteCx1",{type:'line',data:{labels:hl,datasets:[
+      {label:'CX score',data:h.cx_score,borderColor:'#1a8f4c',backgroundColor:'transparent',pointRadius:0,tension:.3,borderWidth:2.5},
+      {label:'Network load PRB %',data:h.prb_pct,borderColor:'#b8720a',backgroundColor:'rgba(184,114,10,.08)',fill:true,pointRadius:0,tension:.3,yAxisID:'y1'}]},options:o('CX score','PRB %')});
+    mk("#siteCx2",{type:'line',data:{labels:hl,datasets:[
+      {label:'Download Mbps',data:h.dl_mbps,borderColor:'#0a6ebd',backgroundColor:'transparent',pointRadius:0,tension:.3,borderWidth:2.5},
+      {label:'Call drop %',data:h.call_drop_pct,borderColor:'#c7000b',backgroundColor:'transparent',pointRadius:0,tension:.3,yAxisID:'y1'}]},options:o('Mbps','Call drop %')});
+  }
+}
+
+$("#trend-go").addEventListener("click", async ()=>{
+  const site = $("#trend-select").value, start = $("#trend-start").value, end = $("#trend-end").value;
+  if(!site||!start||!end) return;
+  $("#trend-result").innerHTML = `<div class="loading">Loading ${site} from ${start} to ${end}...</div>`;
+  try{
+    const r = await j(`/api/site/${site}/history?start=${start}&end=${end}`);
+    const s = r.summary;
+    $("#trend-result").innerHTML = `
+      <div class="summary-band">
+        <div class="summary-item"><div class="l">Avg power</div><div class="v">${fmt(s.avg_power_kw)} kW</div></div>
+        <div class="summary-item"><div class="l">Peak power</div><div class="v">${fmt(s.peak_power_kw)} kW</div></div>
+        <div class="summary-item"><div class="l">Total CO2e</div><div class="v">${fmt(s.total_co2e_kg,0)} kg</div></div>
+        <div class="summary-item"><div class="l">Total cost</div><div class="v">R${fmt(s.total_cost_zar,0)}</div></div>
+        <div class="summary-item"><div class="l">Downtime hours</div><div class="v" style="color:${s.downtime_hours>0?'var(--bad)':'var(--good)'}">${fmt(s.downtime_hours,0)}</div></div>
+      </div>
+      <div class="grid2">
+        <div class="panel"><div class="panel-h"><span class="ph-l">Network demand &amp; power ${tag("hist")}</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="trendNet"></canvas></div></div></div>
+        <div class="panel"><div class="panel-h"><span class="ph-l">Battery SOC &amp; cost ${tag("hist")}</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="trendCost"></canvas></div></div></div>
+      </div>
+      <div class="grid2">
+        <div class="panel"><div class="panel-h"><span class="ph-l">Customer experience vs network load ${tag("hist")}</span> <span class="hint">avg drop ${fmt(s.avg_call_drop_pct,2)}% &middot; avg set-up ${fmt(s.avg_setup_success_pct,2)}%</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="trendCx1"></canvas></div></div></div>
+        <div class="panel"><div class="panel-h"><span class="ph-l">Download speed &amp; call drop ${tag("hist")}</span></div><div class="panel-b"><div class="chart-wrap tall"><canvas id="trendCx2"></canvas></div></div></div>
+      </div>`;
+    const labels = r.series.map(x=>x.timestamp.slice(0,13));
+    const ax = {x:{ticks:{color:'#7b828c',maxTicksLimit:8},grid:{display:false}},y:{ticks:{color:'#7b828c'},grid:{color:'#f0f1f3'}},y1:{position:'right',ticks:{color:'#7b828c'},grid:{display:false}}};
+    const lg = {legend:{labels:{color:'#4a5159',boxWidth:11,font:{size:10.5}}},datalabels:{display:false}};
+    mk("#trendNet",{type:'line',data:{labels,datasets:[
+      {label:'Data volume (GB)',data:r.series.map(x=>x.data_volume_gb),borderColor:'#0a6ebd',backgroundColor:'transparent',pointRadius:0,tension:.2},
+      {label:'Power (kW)',data:r.series.map(x=>x.power_kw),borderColor:'#b8720a',backgroundColor:'transparent',pointRadius:0,tension:.2,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:ax,plugins:lg}});
+    mk("#trendCost",{type:'line',data:{labels,datasets:[
+      {label:'Battery SOC (%)',data:r.series.map(x=>x.battery_soc_pct),borderColor:'#1a8f4c',backgroundColor:'transparent',pointRadius:0,tension:.2},
+      {label:'Cost (R/h)',data:r.series.map(x=>x.cost_zar),borderColor:'#c7000b',backgroundColor:'transparent',pointRadius:0,tension:.2,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:ax,plugins:lg}});
+    mk("#trendCx1",{type:'line',data:{labels,datasets:[
+      {label:'CX score',data:r.series.map(x=>x.cx_score),borderColor:'#1a8f4c',backgroundColor:'transparent',pointRadius:0,tension:.2},
+      {label:'Network load PRB (%)',data:r.series.map(x=>x.prb_pct!==undefined?x.prb_pct:x.prb_utilization_pct),borderColor:'#b8720a',backgroundColor:'transparent',pointRadius:0,tension:.2,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:ax,plugins:lg}});
+    mk("#trendCx2",{type:'line',data:{labels,datasets:[
+      {label:'Download (Mbps)',data:r.series.map(x=>x.dl_mbps),borderColor:'#0a6ebd',backgroundColor:'transparent',pointRadius:0,tension:.2},
+      {label:'Call drop (%)',data:r.series.map(x=>x.call_drop_pct),borderColor:'#c7000b',backgroundColor:'transparent',pointRadius:0,tension:.2,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:ax,plugins:lg}});
+  }catch(e){ $("#trend-result").innerHTML = `<div class="loading">Error: ${e.message}</div>`; }
+});
+
+// ---------- Cost tab ----------
+const COST_COMP = [["tariff","Grid tariff","#1c3d5a"],["diesel","Diesel","#d9720a"],["damages","Damages","#7b828c"],["esg","ESG / carbon","#1a8f4c"],["penalties","SLA penalties","#b8720a"],["lost_revenue","Lost revenue","#c7000b"],["cyber","Cyber response","#7b3fb0"]];
+async function loadCost(){
+  window._costLoaded = true;
+  $("#cost-window").addEventListener("change", refreshCost);
+  $("#cost-sort").addEventListener("change", refreshCostTable);
+  $("#cost-q").addEventListener("input", debounce(refreshCostTable, 250));
+  await refreshCost();
+}
+async function refreshCost(){
+  try{ renderCost(await j(`/api/costs/summary?hours=${$("#cost-window").value}`)); await refreshCostTable(); }
+  catch(e){ $("#cost-kpis").innerHTML = `<div class="loading">Error: ${e.message}</div>`; }
+}
+function renderCost(c){
+  const t = c.components, tot = c.total_zar || 1, pc = v=>fmt(v/tot*100,0)+"% of overall";
+  $("#cost-range").textContent = `${c.from.slice(0,16)} to ${c.to.slice(0,16)} (latest recorded hours of the dataset)`;
+  const tile = (cls,label,val,sub)=>`<div class="kpi ${cls}"><div class="label">${label}</div><div class="value" style="font-size:21px">${val}</div><div class="sub">${sub}</div></div>`;
+  $("#cost-kpis").innerHTML =
+    tile("cost-total bad","OVERALL COST", zar(c.total_zar), `operating ${zar(c.operating_zar)} &middot; risk &amp; penalties ${zar(c.risk_penalty_zar)}`) +
+    tile("", "TARIFF (GRID ELECTRICITY)", zar(t.tariff), pc(t.tariff)) +
+    tile("warn","DIESEL", zar(t.diesel), pc(t.diesel)) +
+    tile("", "DAMAGES", zar(t.damages), "theft, heat stress, battery wear") +
+    tile("good","ESG PENALTIES (CARBON)", zar(t.esg), `carbon shadow price on Scope 1 + 2`) +
+    tile("warn","SLA / QUALITY PENALTIES", zar(t.penalties), "dropped / failed-call shortfall") +
+    tile("bad","LOST REVENUE (UNMET DEMAND)", zar(t.lost_revenue), "customers not served at full quality") +
+    tile("", "CYBER INCIDENT RESPONSE", zar(t.cyber), `${c.incidents.cyber} incidents`);
+  const s = c.series;
+  mk("#costTime",{type:'bar',data:{labels:s.labels,datasets:COST_COMP.map(([k,n,col])=>({label:n,data:s[k],backgroundColor:col,borderWidth:0}))},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},scales:{x:{stacked:true,ticks:{color:'#7b828c',maxTicksLimit:12,font:{size:10.5}},grid:{display:false}},
+      y:{stacked:true,ticks:{color:'#7b828c',font:{size:10.5},callback:v=>zar(v)},grid:{color:'#f0f1f3'}}},
+      plugins:{legend:{position:'bottom',labels:{color:'#4a5159',boxWidth:10,font:{size:10.5}}},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: R${fmt(ctx.raw,0)}`}}}}});
+  const gl = c.by_grid_class.map(g=>g.grid_class);
+  mk("#costClass",{type:'bar',data:{labels:gl.map(x=>x+" grid ("+c.by_grid_class.find(g=>g.grid_class===x).sites+" sites)"),datasets:COST_COMP.map(([k,n,col])=>({label:n,data:c.by_grid_class.map(g=>g[k]/g.sites),backgroundColor:col,borderWidth:0}))},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{stacked:true,ticks:{color:'#7b828c',font:{size:10.5},callback:v=>zar(v)},grid:{color:'#f0f1f3'}},y:{stacked:true,ticks:{color:'#4a5159',font:{size:11}},grid:{display:false}}},
+      plugins:{legend:{position:'bottom',labels:{color:'#4a5159',boxWidth:10,font:{size:10.5}}},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: R${fmt(ctx.raw,0)} per site`}}}}});
+  const a = c.ai_vs_baseline;
+  $("#cost-ai").innerHTML = `
+    <table class="compare-table"><thead><tr><th></th><th>Reactive baseline</th><th>AI orchestrator</th></tr></thead><tbody>
+      <tr><td class="label">Energy + carbon cost</td><td>R${fmt(a.baseline_energy_carbon_zar,0)}</td><td>R${fmt(a.ai_energy_carbon_zar,0)}</td></tr></tbody></table>
+    <div class="verdict ${a.saving_zar>=0?'good':'bad'}">The AI saved R${fmt(a.saving_zar,0)} (${fmt(a.saving_pct,1)}%) on grid, diesel and carbon cost in this window.</div>
+    <div class="hint" style="margin-top:8px">Compares the same network run reactively (grid + generator only) against the AI orchestrator (solar-first, predictive generator, low-load energy saving). Other cost lines are shown as recorded under AI operation.</div>`;
+  const d = c.damages_split, i = c.incidents;
+  const row = (n,v)=>`<div class="fin-row"><span class="n">${n}</span><span class="v">${v}</span></div>`;
+  $("#cost-drivers").innerHTML =
+    row("Site-hours without power (lost revenue)", fmt(i.site_hours_without_power,0)) + row("Hours breaching call-drop / set-up limits (SLA penalties)", fmt(i.sla_violation_hours,0)) +
+    row("Cyber incidents (response cost)", fmt(i.cyber,0)) + row("Theft incidents (damages)", `${fmt(i.theft,0)} &middot; R${fmt(d.theft,0)}`) +
+    row("Site-hours above 38 C (damages)", `${fmt(i.thermal_hours,0)} &middot; R${fmt(d.thermal,0)}`) + row("Battery wear (damages)", `R${fmt(d.battery_wear,0)}`);
+  $("#cost-assump").innerHTML = c.assumptions.map(x=>`<div class="asm-row"><b>${x.name}</b><span>${x.value} <span class="pill ${x.kind==='sourced'?'low':'medium'}">${x.kind}</span></span></div>`).join("");
+}
+async function refreshCostTable(){
+  const h = $("#cost-window").value, sort = $("#cost-sort").value, q = $("#cost-q").value.trim();
+  try{
+    const r = await j(`/api/costs/sites?hours=${h}&sort=${sort}&limit=50&q=${encodeURIComponent(q)}`);
+    $("#cost-table tbody").innerHTML = r.rows.map(x=>`<tr class="clickable" onclick="openSite('${x.site_id}')"><td class="mono">${x.site_id}</td><td>${x.grid_class}</td>
+      <td class="num mono">R${fmt(x.tariff,0)}</td><td class="num mono">R${fmt(x.diesel,0)}</td><td class="num mono">R${fmt(x.damages,0)}</td><td class="num mono">R${fmt(x.esg,0)}</td>
+      <td class="num mono">R${fmt(x.penalties,0)}</td><td class="num mono">R${fmt(x.lost_revenue,0)}</td><td class="num mono">R${fmt(x.cyber,0)}</td><td class="num mono"><b>R${fmt(x.total,0)}</b></td></tr>`).join("") || `<tr><td colspan=10 class="hint">No sites match.</td></tr>`;
+    $("#cost-table-note").textContent = `Showing ${r.rows.length} of ${r.matched} sites, sorted by ${$("#cost-sort").selectedOptions[0].textContent.replace('Sort: ','')}. Click a row to open the site.`;
+  }catch(e){ $("#cost-table tbody").innerHTML = `<tr><td colspan=10 class="hint">Error: ${e.message}</td></tr>`; }
+}
+
+async function loadReco(){
+  window._recoLoaded = true;
+  const all = await j("/api/recommendations");
+  const cats = [...new Set(all.map(r=>r.category))];
+  $("#reco-category").innerHTML = `<option value="">All categories</option>` + cats.map(c=>`<option>${c}</option>`).join("");
+  const render = rows => $("#reco-table tbody").innerHTML = rows.map(r=>
+    `<tr><td class="mono">${r.site_id}</td><td>${r.category}</td><td><span class="pill ${r.priority}">${r.priority}</span></td><td>${r.action}</td><td class="hint">${r.reason}</td><td class="mono">${fmt(r.est_kwh)}</td><td class="mono">${fmt(r.est_kg_co2e)}</td></tr>`
+  ).join("") || `<tr><td colspan=7 class="hint">No matching recommendations.</td></tr>`;
+  render(all);
+  async function refresh(){
+    const cat = $("#reco-category").value, pr = $("#reco-priority").value; const q=[];
+    if(cat) q.push("category="+encodeURIComponent(cat)); if(pr) q.push("priority="+pr);
+    render(await j("/api/recommendations"+(q.length?"?"+q.join("&"):"")));
+  }
+  $("#reco-category").addEventListener("change", refresh); $("#reco-priority").addEventListener("change", refresh);
+}
+
+async function loadMaint(){
+  window._maintLoaded = true;
+  const rows = await j("/api/maintenance");
+  $("#maint-list").innerHTML = rows.length ? rows.map(m=>`
+    <div class="maint-item">
+      <div class="maint-l"><div class="c">${m.site_id} &middot; ${m.component} <span class="pill ${m.urgency}">${m.urgency}</span></div><div class="r">${m.reason}</div></div>
+      <div class="maint-r">${m.eta_days!==null?`<div class="hint">~${fmt(m.eta_days,0)} days</div>`:''}<div class="zar">R${fmt(m.est_avoided_cost_zar,0)} avoidable</div></div>
+    </div>`).join("") : `<div class="hint">No maintenance items flagged.</div>`;
+}
+
+let simHistory = [];  // [{payload, result, label}] - most recent last, used for the before/after comparison
+function readSimForm(){
+  return {
+    power_kw: +$("#f-power").value, prb_utilization_pct: +$("#f-prb").value, active_users: +$("#f-users").value,
+    solar_kw: +$("#f-solar").value, battery_soc_pct: +$("#f-soc").value, battery_soh_pct: +$("#f-soh").value,
+    fuel_pct: +$("#f-fuel").value, grid_up: $("#f-gridup").value==="true", call_drop_pct: +$("#f-drop").value,
+    call_setup_success_pct: +$("#f-setup").value, sinr_db: +$("#f-sinr").value, cabinet_temp_c: +$("#f-cab").value,
+    failed_logins: +$("#f-logins").value, ip_scans: +$("#f-scans").value, tier: $("#f-tier").value, grid_class: $("#f-gridclass").value,
+  };
+}
+function diffFields(a, b){
+  const changed = [];
+  for(const k in a){ if(a[k] !== b[k]) changed.push(k); }
+  return changed;
+}
+function deltaSpan(delta, goodIsNegative=true){
+  if(Math.abs(delta) < 0.005) return `<span class="hint">no change</span>`;
+  const good = goodIsNegative ? delta < 0 : delta > 0;
+  const sign = delta > 0 ? "+" : "";
+  return `<span class="${good?'delta-good':'delta-bad'}">${sign}${fmt(delta,2)}</span>`;
+}
+function renderComparison(prev, curr){
+  const changed = diffFields(prev.payload, curr.payload);
+  const pf = prev.result.financial_impact_this_hour_zar, cf = curr.result.financial_impact_this_hour_zar;
+  const dCost = cf.total_zar - pf.total_zar;
+  const dRevRisk = cf.revenue_at_risk_zar - pf.revenue_at_risk_zar;
+  const prevDecision = prev.result.smart_decisions[0], currDecision = curr.result.smart_decisions[0];
+  const prevWasRight = dCost > 0 || dRevRisk > 0;  // if changing away from the reading the AI liked made things worse, the AI was right
+  let verdictClass = "neutral", verdictText = "Both readings produced a similar financial outcome.";
+  if(dCost > 5 || dRevRisk > 5){
+    verdictClass = "bad";
+    verdictText = `Confirms the AI's original call: this change increased the hourly cost by R${fmt(Math.abs(dCost))} and revenue at risk by R${fmt(Math.abs(dRevRisk))}.`;
+  } else if(dCost < -5){
+    verdictClass = "good";
+    verdictText = `This change improved things: hourly cost dropped by R${fmt(Math.abs(dCost))}. If this matches what the AI recommended, its call is confirmed correct.`;
+  }
+  return `
+    <div class="panel" style="margin-bottom:16px;border-color:var(--cyan)">
+      <div class="panel-h" style="background:var(--cyan-tint)">Comparison: previous reading vs this one ${changed.length?`<span class="hint">changed: ${changed.join(', ')}</span>`:''}</div>
+      <div class="panel-b">
+        <table class="compare-table">
+          <thead><tr><th></th><th>Previous reading</th><th>This reading</th><th>Change</th></tr></thead>
+          <tbody>
+            <tr><td class="label">Decision</td><td style="font-family:'Inter',sans-serif">${prevDecision.action}</td><td style="font-family:'Inter',sans-serif">${currDecision.action}</td><td></td></tr>
+            <tr><td class="label">Total cost this hour</td><td>R${fmt(pf.total_zar)}</td><td>R${fmt(cf.total_zar)}</td><td>${deltaSpan(dCost)}</td></tr>
+            <tr><td class="label">Revenue at risk</td><td>R${fmt(pf.revenue_at_risk_zar)}</td><td>R${fmt(cf.revenue_at_risk_zar)}</td><td>${deltaSpan(dRevRisk)}</td></tr>
+            <tr><td class="label">Carbon (shadow price)</td><td>R${fmt(pf.carbon_shadow_zar)}</td><td>R${fmt(cf.carbon_shadow_zar)}</td><td>${deltaSpan(cf.carbon_shadow_zar-pf.carbon_shadow_zar)}</td></tr>
+          </tbody>
+        </table>
+        <div class="verdict ${verdictClass}">${verdictText}</div>
+      </div>
+    </div>`;
+}
+
+$("#sim-reset").addEventListener("click", ()=>{ simHistory = []; $("#sim-result").innerHTML = ""; });
+
+$("#sim-go").addEventListener("click", async ()=>{
+  const payload = readSimForm();
+  $("#sim-result").innerHTML = `<div class="loading">Assessing...</div>` + $("#sim-result").innerHTML;
+  try{
+    const r = await j("/api/simulate", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+    const fin = r.financial_impact_this_hour_zar, pr = r.projection_next_12h, cy = r.cybersecurity;
+    const comparisonHtml = simHistory.length ? renderComparison(simHistory[simHistory.length-1], {payload, result: r}) : "";
+    simHistory.push({payload, result: r});
+    $("#sim-result").innerHTML = `
+      ${comparisonHtml}
+      <div class="mini-h">${tag("dec")} <span>What the AI recommends for these readings</span></div>
+      ${r.smart_decisions.map(decisionBanner).join("")}
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">12h projection (assuming readings hold steady) ${tag("pred")}</span></div>
+          <div class="panel-b"><div class="chart-wrap"><canvas id="simProj"></canvas></div>
+          <div class="hint" style="margin-top:6px">Inferred source: <b style="color:var(--ink)">${r.derived.power_source_inferred}</b> &middot; net draw ${fmt(r.derived.net_draw_kw)} kW</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><span class="ph-l">Financial impact this hour ${tag("current")}</span> <span class="mono" style="font-size:14px">R${fmt(fin.total_zar)}</span></div>
+          <div class="panel-b">
+            <div class="fin-row"><span class="n">Energy (grid + diesel)</span><span class="v">R${fmt(fin.energy_zar)}</span></div>
+            <div class="fin-row"><span class="n">Battery wear</span><span class="v">R${fmt(fin.battery_wear_zar)}</span></div>
+            <div class="fin-row"><span class="n">Carbon (ESG shadow price)</span><span class="v">R${fmt(fin.carbon_shadow_zar)}</span></div>
+            <div class="fin-row"><span class="n">Revenue at risk</span><span class="v">R${fmt(fin.revenue_at_risk_zar)}</span></div>
+            <div class="fin-row"><span class="n">Incident / cyber</span><span class="v">R${fmt(fin.incident_zar)}</span></div>
+            <div class="fin-total"><span>Total this hour</span><span class="mono">R${fmt(fin.total_zar)}</span></div>
+            <div style="margin-top:10px;padding:10px;border-radius:6px;border:1px solid ${cy.alert?'var(--bad)':'var(--line)'};background:${cy.alert?'var(--bad-tint)':'#fafbfc'}">
+              <b>${cy.alert?'Anomaly flagged':'No anomaly'}</b><div class="hint" style="margin-top:3px">${cy.reason}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    new Chart($("#simProj"),{type:'line',data:{labels:pr.hours.map(h=>h+'h'),datasets:[
+      {label:'Battery SOC (%)',data:pr.battery_soc_pct,borderColor:'#1a8f4c',backgroundColor:'transparent',pointRadius:0,tension:.2},
+      {label:'Fuel (%)',data:pr.fuel_pct,borderColor:'#c7000b',backgroundColor:'transparent',pointRadius:0,tension:.2,yAxisID:'y1'}
+    ]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:'#7b828c'},grid:{display:false}},y:{min:0,max:100,ticks:{color:'#7b828c'},grid:{color:'#f0f1f3'}},y1:{min:0,max:100,position:'right',ticks:{color:'#7b828c'},grid:{display:false}}},plugins:{legend:{labels:{color:'#4a5159',boxWidth:11,font:{size:11}}}}}});
+  }catch(e){ $("#sim-result").innerHTML = `<div class="loading">Error: ${e.message}</div>`; }
+});
+
+async function loadPolicy(){
+  window._policyLoaded = true;
+  const r = await j("/api/whatif/baseline_vs_smart");
+  const b = r.baseline, s = r.smart;
+  $("#whatif-kpis").innerHTML = `
+    <div class="panel"><div class="panel-h">Reactive baseline (grid + generator only)</div><div class="panel-b metric-grid">
+      <div class="metric"><div class="l">Diesel</div><div class="v">${fmt(b.diesel_l,0)} L</div></div>
+      <div class="metric"><div class="l">CO2e</div><div class="v">${fmt(b.co2e_t,1)} t</div></div>
+      <div class="metric"><div class="l">Cost</div><div class="v">R${fmt(b.cost_zar_m,2)}m</div></div>
+      <div class="metric"><div class="l">Availability</div><div class="v">${fmt(b.availability_pct,2)}%</div></div>
+    </div></div>
+    <div class="panel"><div class="panel-h" style="color:var(--good)">Smart orchestrator (solar-first, predictive genset)</div><div class="panel-b metric-grid">
+      <div class="metric"><div class="l">Diesel</div><div class="v">${fmt(s.diesel_l,0)} L</div></div>
+      <div class="metric"><div class="l">CO2e</div><div class="v">${fmt(s.co2e_t,1)} t</div></div>
+      <div class="metric"><div class="l">Cost</div><div class="v">R${fmt(s.cost_zar_m,2)}m</div></div>
+      <div class="metric"><div class="l">Availability</div><div class="v">${fmt(s.availability_pct,2)}%</div></div>
+    </div></div>`;
+  $("#attrib-table tbody").innerHTML = r.attribution.map(a=>
+    `<tr><td>${a.step}</td><td class="mono">${fmt(a.diesel_l,0)}</td><td class="mono">${fmt(a.co2e_t,1)}</td><td class="mono">${fmt(a.cost_zar_m,2)}</td><td class="mono">${fmt(a.availability_pct,2)}%</td><td class="mono">${fmt(a.risk_hours,0)}</td></tr>`).join("");
+  const sites = await j("/api/whatif/sites");
+  const renderSites = rows => $("#whatif-sites-table tbody").innerHTML = rows.slice(0,150).map(x=>
+    `<tr><td class="mono">${x.site_id}</td><td>${x.grid_class}</td><td class="mono">${fmt(x.energy_saving_pct,1)}%</td><td><span class="pill ${x.availability_risk.toLowerCase()}">${x.availability_risk}</span></td><td><span class="pill ${x.decision.toLowerCase().includes('not')?'high':x.decision.toLowerCase()}">${x.decision}</span></td><td class="mono">${fmt(x.co2e_saved_kg,1)}</td></tr>`).join("");
+  renderSites(sites);
+  document.querySelectorAll("#view-simulate .tab2").forEach(t=>t.addEventListener("click", async ()=>{
+    document.querySelectorAll("#view-simulate .tab2").forEach(x=>x.classList.remove("active")); t.classList.add("active");
+    renderSites(await j("/api/whatif/sites"+(t.dataset.d?`?decision=${encodeURIComponent(t.dataset.d)}`:"")));
+  }));
+}
+
+// ---------- Dataset page ----------
+async function loadDataset(){
+  window._dsLoaded = true;
+  const info = await j("/api/dataset/info");
+  $("#ds-kpis").innerHTML = `
+    <div class="kpi"><div class="label">TOTAL ROWS</div><div class="value">${fmt(info.rows,0)}</div><div class="sub">hourly observations</div></div>
+    <div class="kpi"><div class="label">SITES</div><div class="value">${fmt(info.sites,0)}</div><div class="sub">${fmt(info.hours_per_site,0)} hours each</div></div>
+    <div class="kpi"><div class="label">DATE RANGE</div><div class="value" style="font-size:15px">${info.date_min.slice(0,10)}</div><div class="sub">to ${info.date_max.slice(0,10)}</div></div>
+    <div class="kpi"><div class="label">COLUMNS</div><div class="value">${fmt(info.total_columns,0)}</div><div class="sub">across ${info.groups.length} groups</div></div>
+    <div class="kpi good"><div class="label">SOURCE</div><div class="value" style="font-size:12px;line-height:1.4">Synthetic (generated)</div></div>`;
+  $("#ds-groups").innerHTML = info.groups.map(g=>`
+    <div style="margin-bottom:10px"><b style="font-size:12.5px">${g.group}</b><div style="margin-top:4px">${g.columns.map(c=>`<span class="group-tag">${c}</span>`).join("")}</div></div>`).join("");
+
+  const meta = await j("/api/meta");
+  $("#ds-site").innerHTML = `<option value="">All sites (first 50 rows)</option>` + meta.sites.map(s=>`<option>${s}</option>`).join("");
+}
+$("#ds-load").addEventListener("click", async ()=>{
+  const site = $("#ds-site").value;
+  const r = await j(`/api/dataset/sample?${site?`site_id=${site}&`:''}limit=50`);
+  $("#ds-count").textContent = `${fmt(r.total_rows,0)} rows available - showing first 50`;
+  const cols = r.columns;
+  $("#ds-table thead").innerHTML = `<tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr>`;
+  $("#ds-table tbody").innerHTML = r.rows.map(row=>`<tr>${cols.map(c=>`<td class="mono" style="font-size:11px;white-space:nowrap">${row[c]}</td>`).join("")}</tr>`).join("");
+});
+
+async function handleUpload(file){
+  if(!file) return;
+  $("#ds-upload-result").innerHTML = `<div class="loading">Validating ${file.name}…</div>`;
+  const fd = new FormData(); fd.append("file", file);
+  try{
+    const r = await j("/api/dataset/upload", {method:"POST", body: fd});
+    $("#ds-upload-result").innerHTML = `
+      <div class="verdict ${r.valid?'good':'bad'}">${r.message}</div>
+      <div class="metric-grid" style="margin-top:12px">
+        <div class="metric"><div class="l">Rows</div><div class="v">${fmt(r.rows,0)}</div></div>
+        <div class="metric"><div class="l">Columns found</div><div class="v">${fmt(r.columns_found,0)}</div></div>
+        <div class="metric"><div class="l">Recognised</div><div class="v" style="font-size:14px">${r.recognised_of_known}</div></div>
+        <div class="metric"><div class="l">Valid for pipeline</div><div class="v" style="color:${r.valid?'var(--good)':'var(--bad)'}">${r.valid?'Yes':'No'}</div></div>
+      </div>
+      ${r.preview.length?`<div style="overflow-x:auto;margin-top:12px"><table><thead><tr>${Object.keys(r.preview[0]).map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${r.preview.slice(0,10).map(row=>`<tr>${Object.values(row).map(v=>`<td class="mono" style="font-size:11px;white-space:nowrap">${v}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`:''}`;
+  }catch(e){ $("#ds-upload-result").innerHTML = `<div class="verdict bad">Upload failed: ${e.message}</div>`; }
+}
+$("#ds-file").addEventListener("change", e=>handleUpload(e.target.files[0]));
+const dz = $("#ds-dropzone");
+["dragover","dragleave","drop"].forEach(ev=>dz.addEventListener(ev, e=>{
+  e.preventDefault();
+  if(ev==="dragover") dz.classList.add("drag"); else dz.classList.remove("drag");
+  if(ev==="drop") handleUpload(e.dataTransfer.files[0]);
+}));
+
+loadExec();
+</script>
+</body>
+</html>

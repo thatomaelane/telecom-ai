@@ -1,0 +1,25 @@
+{
+  "as_of": "2026-10-30 23:00:00",
+  "sites": 500,
+  "status_counts": {
+    "normal": 442,
+    "alert": 34,
+    "backup": 21,
+    "critical": 3
+  },
+  "power_now_kw": 3526.6006,
+  "energy_last24h_kwh": 95493.1534,
+  "co2e_last24h_kg": 68548.3725,
+  "renewable_last24h_pct": 20.885500572442087,
+  "grid_down_sites": 24,
+  "recs": {
+    "Energy saving": 514,
+    "Battery health": 124,
+    "Security": 37,
+    "Fuel logistics": 2,
+    "Resilience": 1
+  },
+  "cyber_alerts_24h": 115,
+  "potential_saving_kwh_24h": 1145.356828655925,
+  "potential_saving_kg_24h": 1088.088987223129
+}

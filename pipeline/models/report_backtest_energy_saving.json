@@ -1,0 +1,83 @@
+{
+  "window": "days 48-60, all 500 sites, out-of-sample forecasts",
+  "assumed_saving_fraction_of_dc_load": {
+    "4G": 0.04,
+    "3G_4G": 0.07,
+    "4G_5G": 0.08,
+    "3G_4G_5G": 0.1
+  },
+  "rule": "activate if forecast PRB next 2h <= 35% and SINR>=12 dB and drop<=1.0%",
+  "AI_forecast_rule": {
+    "hours_active": 32460,
+    "kwh_saved": 12925.854795489311,
+    "kg_co2e_saved": 11800.729183697335,
+    "pct_of_fleet_energy": 1.1407095556558795,
+    "qos_risk_hours_pct": 0.07701786814540973
+  },
+  "threshold_sweep": [
+    {
+      "hours_active": 1,
+      "kwh_saved": 0.5530499935150147,
+      "kg_co2e_saved": 0.5253974938392639,
+      "pct_of_fleet_energy": 4.880678472251999e-05,
+      "qos_risk_hours_pct": 0.0,
+      "prb_threshold": 20
+    },
+    {
+      "hours_active": 1886,
+      "kwh_saved": 758.8017689132691,
+      "kg_co2e_saved": 697.4090652254886,
+      "pct_of_fleet_energy": 0.06696442458490298,
+      "qos_risk_hours_pct": 0.0,
+      "prb_threshold": 25
+    },
+    {
+      "hours_active": 13719,
+      "kwh_saved": 5276.870285973549,
+      "kg_co2e_saved": 4826.372950489571,
+      "pct_of_fleet_energy": 0.4656849743714559,
+      "qos_risk_hours_pct": 0.029156644070267513,
+      "prb_threshold": 30
+    },
+    {
+      "hours_active": 32460,
+      "kwh_saved": 12925.854795489311,
+      "kg_co2e_saved": 11800.729183697335,
+      "pct_of_fleet_energy": 1.1407095556558795,
+      "qos_risk_hours_pct": 0.07701786814540973,
+      "prb_threshold": 35
+    },
+    {
+      "hours_active": 49865,
+      "kwh_saved": 20122.790089097023,
+      "kg_co2e_saved": 18247.817256221322,
+      "pct_of_fleet_energy": 1.7758406932670063,
+      "qos_risk_hours_pct": 0.29680136368194127,
+      "prb_threshold": 40
+    },
+    {
+      "hours_active": 67037,
+      "kwh_saved": 27529.545758118627,
+      "kg_co2e_saved": 24850.626617625217,
+      "pct_of_fleet_energy": 2.4294885255952563,
+      "qos_risk_hours_pct": 1.8691170547608038,
+      "prb_threshold": 45
+    },
+    {
+      "hours_active": 82946,
+      "kwh_saved": 34715.737371296884,
+      "kg_co2e_saved": 31251.84246440867,
+      "pct_of_fleet_energy": 3.0636715310230427,
+      "qos_risk_hours_pct": 6.599474356810455,
+      "prb_threshold": 50
+    }
+  ],
+  "fixed_schedule_00_05": {
+    "hours_active": 35500,
+    "kwh_saved": 14409.584065155983,
+    "kg_co2e_saved": 13289.529739324684,
+    "pct_of_fleet_energy": 1.2716489931394042,
+    "qos_risk_hours_pct": 2.1380281690140843
+  },
+  "qos_risk_definition": "actual PRB > 50% in an hour the saving mode was on"
+}

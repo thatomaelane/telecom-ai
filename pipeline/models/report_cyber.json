@@ -1,0 +1,78 @@
+{
+  "fit_window": "days 0-40 unsupervised",
+  "eval_window": "days 40-60",
+  "cyber_incidents": {
+    "positive_hours": 1984,
+    "base_rate": 0.008266666666666667,
+    "isolation_forest": {
+      "AUC": 0.9843037689354308,
+      "AP": 0.3862354771770831
+    },
+    "zscore_rule": {
+      "AUC": 0.9610271873580334,
+      "AP": 0.7644194339896133
+    },
+    "site_IDS_flag": {
+      "AUC": 0.8998861692138886,
+      "AP": 0.14162857544906646
+    }
+  },
+  "physical_theft": {
+    "positive_hours": 58,
+    "base_rate": 0.00024166666666666667,
+    "isolation_forest": {
+      "AUC": 0.9970673228788911,
+      "AP": 0.05311427582441177
+    },
+    "zscore_rule": {
+      "AUC": 0.5474113140560694,
+      "AP": 0.0002999951304037608
+    },
+    "site_IDS_flag": {
+      "AUC": 0.5139798870934038,
+      "AP": 0.0002530262185274324
+    }
+  },
+  "two_lane_alerting": {
+    "thr_rule_z": 3.138892412185669,
+    "thr_isoforest": 0.6259169722362887,
+    "alerts_per_day_fleet": 125.3,
+    "alert_share_of_site_hours_pct": 1.0441666666666667,
+    "cyber_hour_precision": 0.627294493216281,
+    "cyber_hour_recall": 0.7923387096774194,
+    "phys_hour_recall": 0.6551724137931034,
+    "baseline_site_IDS_precision": 0.16813979477801483,
+    "baseline_site_IDS_recall": 0.8341733870967742,
+    "baseline_site_IDS_alerts_per_day_fleet": 492.15
+  },
+  "event_level_detection_two_lane": {
+    "battery_cable_theft": {
+      "events": 9,
+      "detected_pct": 100.0
+    },
+    "brute_force": {
+      "events": 120,
+      "detected_pct": 98.3
+    },
+    "fuel_theft": {
+      "events": 10,
+      "detected_pct": 100.0
+    },
+    "modbus_intrusion": {
+      "events": 37,
+      "detected_pct": 97.3
+    },
+    "port_scan": {
+      "events": 136,
+      "detected_pct": 89.7
+    },
+    "regional_scan_campaign": {
+      "events": 61,
+      "detected_pct": 82.0
+    },
+    "traffic_flood": {
+      "events": 69,
+      "detected_pct": 97.1
+    }
+  }
+}
