@@ -112,10 +112,10 @@ class Insights:
 
         # ---- orchestrator (AI-managed) hourly matrices, in the same site order as the dataset
         h = engine.hourly
-        h = h.assign(_o=h.site_id.map(engine.site_idx).to_numpy()).sort_values(["_o", "timestamp"], kind="stable")
+        order = np.lexsort((h.timestamp.to_numpy(), h.site_id.map(engine.site_idx).to_numpy()))   # site, then time (no table copy)
 
         def m(col, dtype=np.float32):
-            return h[col].to_numpy().reshape(S, T).astype(dtype)
+            return h[col].to_numpy()[order].reshape(S, T).astype(dtype)
         self.load = m("load_kw"); self.solar = m("solar_kw"); self.grid_up = m("grid_up", bool)
         self.s_gen = m("smart_gen_on", bool); self.s_soc = m("smart_soc"); self.s_risk = m("smart_risk", bool)
         self.s_diesel = m("smart_diesel_l"); self.s_cost_grid = m("smart_cost_grid_zar")

@@ -7,7 +7,7 @@ before it is wrapped in FastAPI. `snapshot()` is the one function the API will c
 """
 import sys, json
 import numpy as np, pandas as pd, lightgbm as lgb, joblib
-from common import Data, MODELS, SERVING
+from common import Data, MODELS, SERVING, read_parquet_lowmem
 from s1_forecast import Feat
 from s5_orchestrator import CFG
 from s3_cyber import build as build_cyber_features, FEATS as CYBER_FEATS
@@ -35,7 +35,7 @@ class Engine:
         cy = joblib.load(MODELS / "cyber_isoforest.joblib")
         self.iso, self.thr_rule, self.thr_if = cy["model"], cy["thr_rule_z"], cy["thr_if"]
         self.Z = build_cyber_features(self.D)
-        self.hourly = pd.read_parquet(SERVING / "orchestrator_hourly.parquet")
+        self.hourly = read_parquet_lowmem(SERVING / "orchestrator_hourly.parquet")
         self.hourly["timestamp"] = pd.to_datetime(self.hourly.timestamp)
         self.sites_tbl = pd.read_parquet(SERVING / "orchestrator_sites.parquet").set_index("site_id")
         self.ts_index = pd.Series(np.arange(T), index=self.D.ts[:T])

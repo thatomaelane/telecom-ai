@@ -63,6 +63,11 @@ async def lifespan(app: FastAPI):
         print("forecast_next24h.parquet not loaded:", e); fc = None
     print("Building customer-experience, cost and live-feed tables...")
     STATE["ins"] = Insights(STATE["engine"], STATE["site_status"], STATE["cyber"], fc)
+    import gc; gc.collect()
+    try:                                  # Linux only: return freed start-up memory to the OS (keeps small hosts under their limit)
+        import ctypes; ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
     print("Ready.")
     yield
     STATE.clear()
